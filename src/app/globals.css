@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9fafb;
+    --bg-tertiary: #f3f4f6;
+    --bg-card: #ffffff;
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
+    --text-muted: #9ca3af;
+    --border: #e5e7eb;
+    --border-light: #f3f4f6;
+    --sidebar-bg: #1f2937;
+    --sidebar-text: #f3f4f6;
+    --sidebar-hover: #374151;
+    --accent: #3b82f6;
+    --accent-light: #dbeafe;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+  }
+
+  [data-theme='dark'] {
+    --bg-primary: #0f1117;
+    --bg-secondary: #1a1d27;
+    --bg-tertiary: #252830;
+    --bg-card: #1a1d27;
+    --text-primary: #e4e4e7;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+    --border: #2e3039;
+    --border-light: #252830;
+    --sidebar-bg: #0f1117;
+    --sidebar-text: #e4e4e7;
+    --sidebar-hover: #252830;
+    --accent: #3b82f6;
+    --accent-light: #1e3a8a;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+  }
+
+  * {
+    @apply border-[var(--border)];
+  }
+
+  body {
+    @apply bg-[var(--bg-primary)] text-[var(--text-primary)];
+  }
+}
+
+@layer components {
+  .sidebar-nav-item {
+    @apply flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md transition-colors;
+  }
+
+  .sidebar-nav-item-active {
+    @apply bg-[var(--accent)] text-white;
+  }
+
+  .sidebar-nav-item-inactive {
+    @apply text-[var(--sidebar-text)] hover:bg-[var(--sidebar-hover)];
+  }
+
+  .topbar-button {
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors;
+  }
+
+  .button-primary {
+    @apply bg-[var(--accent)] text-white hover:opacity-90;
+  }
+
+  .button-secondary {
+    @apply bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:bg-[var(--bg-secondary)];
+  }
+
+  .input-base {
+    @apply px-3 py-2 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder-[var(--text-muted)] transition-colors;
+  }
+
+  .input-base:focus {
+    @apply outline-none ring-2 ring-[var(--accent)] ring-offset-0;
+  }
+
+  .card {
+    @apply rounded-lg border border-[var(--border)] bg-[var(--bg-card)];
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .badge-blue {
+    @apply bg-[var(--accent-light)] text-[var(--accent)];
+  }
+
+  .badge-green {
+    @apply bg-green-100 text-[var(--success)];
+  }
+
+  .badge-yellow {
+    @apply bg-yellow-100 text-[var(--warning)];
+  }
+
+  .badge-red {
+    @apply bg-red-100 text-[var(--error)];
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@supports (scrollbar-gutter: stable) {
+  html {
+    scrollbar-gutter: stable;
+  }
+}
