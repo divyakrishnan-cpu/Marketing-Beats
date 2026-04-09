@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { User, UserRole, levelToRole } from '@/types';
 import EditUserModal from '@/components/user-management/EditUserModal';
-import { ChevronUp, ChevronDown, Edit2, Search } from 'lucide-react';
+import { ChevronUp, ChevronDown, Edit2, Search, UserPlus } from 'lucide-react';
 
 // All 69 employees from the CSV
 const ALL_USERS: User[] = [
@@ -1236,27 +1236,19 @@ export default function UserManagementPage() {
   const getRoleColor = (role: UserRole) => {
     switch (role) {
       case 'admin':
-        return 'bg-purple-100 text-purple-700';
+        return 'gb-badge gb-badge-red';
       case 'manager':
-        return 'bg-blue-100 text-blue-700';
+        return 'gb-badge gb-badge-blue';
       case 'designer':
-        return 'bg-green-100 text-green-700';
+        return 'gb-badge gb-badge-green';
       case 'viewer':
-        return 'bg-gray-100 text-gray-700';
+        return 'gb-badge gb-badge-gray';
     }
   };
 
   const getAvatarColor = (role: UserRole) => {
-    switch (role) {
-      case 'admin':
-        return 'bg-purple-500';
-      case 'manager':
-        return 'bg-blue-500';
-      case 'designer':
-        return 'bg-green-500';
-      case 'viewer':
-        return 'bg-gray-500';
-    }
+    // This is now handled inline with CSS variables and gradients
+    return '';
   };
 
   const SortIndicator = ({ column }: { column: SortKey }) => {
@@ -1272,48 +1264,58 @@ export default function UserManagementPage() {
 
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="card p-4">
-          <div className="text-sm text-[var(--text-muted)] font-medium">
-            Total Users
-          </div>
-          <div className="text-3xl font-bold text-[var(--text-primary)] mt-2">
-            {stats.total}
-          </div>
+    <div style={{ padding: '28px 32px' }}>
+      {/* Page Header */}
+      <div className="gb-page-header flex items-start justify-between gap-6">
+        <div>
+          <h1 className="gb-page-title">User Management</h1>
+          <p className="gb-page-description">
+            Manage permissions, roles, and access for the marketing team.
+          </p>
         </div>
-        <div className="card p-4">
-          <div className="text-sm text-[var(--text-muted)] font-medium">
-            Active
-          </div>
-          <div className="text-3xl font-bold text-[var(--success)] mt-2">
+        <button className="gb-btn gb-btn-primary">
+          <UserPlus className="w-4 h-4" />
+          Invite User
+        </button>
+      </div>
+
+      {/* Stats Row */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+        <div className="gb-stat-card">
+          <div className="gb-stat-label">Total Users</div>
+          <div className="gb-stat-value">{stats.total}</div>
+        </div>
+        <div className="gb-stat-card">
+          <div className="gb-stat-label">Active</div>
+          <div className="gb-stat-value" style={{ color: 'var(--success)' }}>
             {stats.active}
           </div>
         </div>
-        <div className="card p-4">
-          <div className="text-sm text-[var(--text-muted)] font-medium">
-            Managers
+        <div className="gb-stat-card">
+          <div className="gb-stat-label">Admins</div>
+          <div className="gb-stat-value" style={{ color: 'var(--error)' }}>
+            {users.filter((u) => u.role === 'admin').length}
           </div>
-          <div className="text-3xl font-bold text-[var(--accent)] mt-2">
+        </div>
+        <div className="gb-stat-card">
+          <div className="gb-stat-label">Managers</div>
+          <div className="gb-stat-value" style={{ color: 'var(--accent)' }}>
             {stats.managers}
           </div>
         </div>
-        <div className="card p-4">
-          <div className="text-sm text-[var(--text-muted)] font-medium">
-            Designers
-          </div>
-          <div className="text-3xl font-bold text-green-600 mt-2">
+        <div className="gb-stat-card">
+          <div className="gb-stat-label">Designers</div>
+          <div className="gb-stat-value" style={{ color: 'var(--success)' }}>
             {stats.designers}
           </div>
         </div>
       </div>
 
       {/* Filter and Search */}
-      <div className="card p-4 space-y-4">
+      <div className="gb-card" style={{ padding: '20px', marginBottom: '24px' }}>
         {/* Search Bar */}
-        <div className="flex items-center gap-2 input-base bg-[var(--bg-primary)]">
-          <Search className="w-5 h-5 text-[var(--text-muted)]" />
+        <div className="gb-search" style={{ width: '320px', marginBottom: '16px' }}>
+          <Search className="w-4 h-4" />
           <input
             type="text"
             placeholder="Search by name, email, or designation..."
@@ -1322,12 +1324,11 @@ export default function UserManagementPage() {
               setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
-            className="flex-1 bg-transparent border-0 outline-none text-[var(--text-primary)]"
           />
         </div>
 
-        {/* Role Filters */}
-        <div className="flex gap-2 flex-wrap">
+        {/* Role Filters - Using gb-tabs pattern */}
+        <div className="flex gap-2 flex-wrap mb-4">
           {(['all', 'admin', 'manager', 'designer', 'viewer'] as const).map(
             (role) => (
               <button
@@ -1336,10 +1337,10 @@ export default function UserManagementPage() {
                   setSelectedRole(role);
                   setCurrentPage(1);
                 }}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                className={`gb-btn ${
                   selectedRole === role
-                    ? 'bg-[var(--accent)] text-white'
-                    : 'bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
+                    ? 'gb-btn-primary'
+                    : 'gb-btn-secondary'
                 }`}
               >
                 {role.charAt(0).toUpperCase() + role.slice(1)}
@@ -1357,10 +1358,10 @@ export default function UserManagementPage() {
                 setSelectedLocation(location);
                 setCurrentPage(1);
               }}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              className={`gb-btn ${
                 selectedLocation === location
-                  ? 'bg-[var(--accent)] text-white'
-                  : 'bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
+                  ? 'gb-btn-primary'
+                  : 'gb-btn-secondary'
               }`}
             >
               {location === 'all'
@@ -1372,131 +1373,134 @@ export default function UserManagementPage() {
       </div>
 
       {/* Results Info */}
-      <div className="text-sm text-[var(--text-muted)]">
+      <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
         Showing {paginatedUsers.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0} to{' '}
         {Math.min(currentPage * ITEMS_PER_PAGE, filteredUsers.length)} of{' '}
         {filteredUsers.length} users
       </div>
 
       {/* Users Table */}
-      <div className="card overflow-x-auto">
-        <table className="w-full">
-          <thead className="border-b border-[var(--border)]">
-            <tr className="bg-[var(--bg-secondary)]">
-              <th className="px-6 py-3 text-left">
+      <div className="gb-card overflow-x-auto mb-6">
+        <table className="gb-table">
+          <thead>
+            <tr>
+              <th>
                 <button
                   onClick={() => handleSort('name')}
-                  className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-1"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
                 >
                   Name
                   <SortIndicator column="name" />
                 </button>
               </th>
-              <th className="px-6 py-3 text-left">
+              <th>
                 <button
                   onClick={() => handleSort('employee_code')}
-                  className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-1"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
                 >
                   Code
                   <SortIndicator column="employee_code" />
                 </button>
               </th>
-              <th className="px-6 py-3 text-left">
+              <th>
                 <button
                   onClick={() => handleSort('designation')}
-                  className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-1"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
                 >
                   Designation
                   <SortIndicator column="designation" />
                 </button>
               </th>
-              <th className="px-6 py-3 text-left">
+              <th>
                 <button
                   onClick={() => handleSort('location')}
-                  className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-1"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
                 >
                   Location
                   <SortIndicator column="location" />
                 </button>
               </th>
-              <th className="px-6 py-3 text-left">
+              <th>
                 <button
                   onClick={() => handleSort('level')}
-                  className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-1"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
                 >
                   Level
                   <SortIndicator column="level" />
                 </button>
               </th>
-              <th className="px-6 py-3 text-left">
+              <th>
                 <button
                   onClick={() => handleSort('role')}
-                  className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-1"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
                 >
                   Role
                   <SortIndicator column="role" />
                 </button>
               </th>
-              <th className="px-6 py-3 text-left">
-                <span className="text-sm font-semibold text-[var(--text-primary)]">
-                  Supervisor
-                </span>
-              </th>
-              <th className="px-6 py-3 text-left">
+              <th>Supervisor</th>
+              <th>
                 <button
                   onClick={() => handleSort('is_active')}
-                  className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-1"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}
                 >
                   Status
                   <SortIndicator column="is_active" />
                 </button>
               </th>
-              <th className="px-6 py-3 text-left">
-                <span className="text-sm font-semibold text-[var(--text-primary)]">
-                  Actions
-                </span>
-              </th>
+              <th>Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-[var(--border)]">
+          <tbody>
             {paginatedUsers.map((user) => (
-              <tr key={user.id} className="hover:bg-[var(--bg-secondary)] transition-colors">
-                <td className="px-6 py-3">
+              <tr key={user.id}>
+                <td>
                   <div className="flex items-center gap-3">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold ${getAvatarColor(user.role)}`}
+                      style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, var(--accent), var(--accent-hover))',
+                        color: '#fff',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
                     >
                       {getInitials(user.name)}
                     </div>
                     <div>
-                      <div className="text-sm font-medium text-[var(--text-primary)]">
+                      <div style={{ fontSize: '13px', fontWeight: '500', color: 'var(--text-primary)', marginBottom: '2px' }}>
                         {user.name}
                       </div>
-                      <div className="text-xs text-[var(--text-muted)]">
+                      <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                         {user.email}
                       </div>
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-3">
-                  <span className="text-sm text-[var(--text-primary)]">
+                <td>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
                     {user.employee_code}
                   </span>
                 </td>
-                <td className="px-6 py-3">
-                  <span className="text-sm text-[var(--text-primary)]">
+                <td>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
                     {user.designation}
                   </span>
                 </td>
-                <td className="px-6 py-3">
-                  <span className="text-sm text-[var(--text-primary)]">
+                <td>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
                     {user.location}
                   </span>
                 </td>
-                <td className="px-6 py-3">
-                  <span className="text-sm font-medium text-[var(--text-primary)]">
+                <td>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
                     {user.level === 'SP&L' ? (
-                      <span className="badge bg-purple-100 text-purple-700">
+                      <span className="gb-badge gb-badge-blue">
                         SP&L
                       </span>
                     ) : (
@@ -1504,36 +1508,50 @@ export default function UserManagementPage() {
                     )}
                   </span>
                 </td>
-                <td className="px-6 py-3">
-                  <span
-                    className={`badge text-xs font-semibold capitalize ${getRoleColor(user.role)}`}
-                  >
+                <td>
+                  <span className={getRoleColor(user.role)}>
                     {user.role}
                   </span>
                 </td>
-                <td className="px-6 py-3">
-                  <span className="text-sm text-[var(--text-primary)]">
+                <td>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
                     {user.supervisor_name || '-'}
                   </span>
                 </td>
-                <td className="px-6 py-3">
+                <td>
                   <button
                     onClick={() => handleToggleActive(user)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      user.is_active ? 'bg-green-600' : 'bg-gray-300'
-                    }`}
+                    style={{
+                      position: 'relative',
+                      display: 'inline-flex',
+                      height: '24px',
+                      width: '44px',
+                      alignItems: 'center',
+                      borderRadius: '12px',
+                      transition: 'background-color 200ms ease',
+                      backgroundColor: user.is_active ? 'var(--success)' : 'var(--text-faint)',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
                   >
                     <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        user.is_active ? 'translate-x-6' : 'translate-x-1'
-                      }`}
+                      style={{
+                        position: 'absolute',
+                        display: 'block',
+                        height: '18px',
+                        width: '18px',
+                        transform: user.is_active ? 'translateX(22px)' : 'translateX(3px)',
+                        borderRadius: '50%',
+                        backgroundColor: '#fff',
+                        transition: 'transform 200ms ease',
+                      }}
                     />
                   </button>
                 </td>
-                <td className="px-6 py-3">
+                <td>
                   <button
                     onClick={() => handleEditUser(user)}
-                    className="inline-flex items-center gap-2 px-3 py-1 rounded text-sm font-medium bg-[var(--accent)] text-white hover:opacity-90 transition-opacity"
+                    className="gb-btn gb-btn-primary"
                   >
                     <Edit2 className="w-4 h-4" />
                     Edit
@@ -1546,15 +1564,15 @@ export default function UserManagementPage() {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-[var(--text-muted)]">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
+        <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
           Page {currentPage} of {totalPages}
         </div>
-        <div className="flex gap-2">
+        <div style={{ display: 'flex', gap: '8px' }}>
           <button
             onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
             disabled={currentPage === 1}
-            className="px-4 py-2 rounded border border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="gb-btn gb-btn-secondary"
           >
             Previous
           </button>
@@ -1564,11 +1582,7 @@ export default function UserManagementPage() {
               <button
                 key={pageNum}
                 onClick={() => setCurrentPage(pageNum)}
-                className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
-                  currentPage === pageNum
-                    ? 'bg-[var(--accent)] text-white'
-                    : 'border border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'
-                }`}
+                className={currentPage === pageNum ? 'gb-btn gb-btn-primary' : 'gb-btn gb-btn-secondary'}
               >
                 {pageNum}
               </button>
@@ -1577,7 +1591,7 @@ export default function UserManagementPage() {
           <button
             onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 rounded border border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="gb-btn gb-btn-secondary"
           >
             Next
           </button>
@@ -1585,32 +1599,40 @@ export default function UserManagementPage() {
       </div>
 
       {/* Permission Management Section */}
-      <div className="card p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+      <div className="gb-card" style={{ padding: '24px' }}>
+        <h3 className="gb-section-title" style={{ marginBottom: '20px' }}>
           Role Permissions
         </h3>
-        <div className="space-y-4">
-          <div className="border-l-4 border-purple-500 pl-4 py-2">
-            <h4 className="font-semibold text-purple-700">Admin</h4>
-            <p className="text-sm text-[var(--text-secondary)] mt-1">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+          <div style={{ padding: '16px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-tertiary)' }}>
+            <div style={{ marginBottom: '8px' }}>
+              <span className="gb-badge gb-badge-red">Admin</span>
+            </div>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
               Full access to all features, user management, and settings
             </p>
           </div>
-          <div className="border-l-4 border-blue-500 pl-4 py-2">
-            <h4 className="font-semibold text-blue-700">Manager</h4>
-            <p className="text-sm text-[var(--text-secondary)] mt-1">
+          <div style={{ padding: '16px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-tertiary)' }}>
+            <div style={{ marginBottom: '8px' }}>
+              <span className="gb-badge gb-badge-blue">Manager</span>
+            </div>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
               Can assign tasks, view all team analytics, and manage pipeline
             </p>
           </div>
-          <div className="border-l-4 border-green-500 pl-4 py-2">
-            <h4 className="font-semibold text-green-700">Designer</h4>
-            <p className="text-sm text-[var(--text-secondary)] mt-1">
+          <div style={{ padding: '16px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-tertiary)' }}>
+            <div style={{ marginBottom: '8px' }}>
+              <span className="gb-badge gb-badge-green">Designer</span>
+            </div>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
               Can view assigned tasks, update status, and upload deliverables
             </p>
           </div>
-          <div className="border-l-4 border-gray-500 pl-4 py-2">
-            <h4 className="font-semibold text-gray-700">Viewer</h4>
-            <p className="text-sm text-[var(--text-secondary)] mt-1">
+          <div style={{ padding: '16px', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--bg-tertiary)' }}>
+            <div style={{ marginBottom: '8px' }}>
+              <span className="gb-badge gb-badge-gray">Viewer</span>
+            </div>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
               Read-only access to dashboards and reports
             </p>
           </div>

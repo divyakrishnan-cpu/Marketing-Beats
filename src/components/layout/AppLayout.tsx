@@ -9,27 +9,21 @@ interface AppLayoutProps {
 }
 
 export default function AppLayout({ children, title }: AppLayoutProps) {
-  const [showNewRequest, setShowNewRequest] = useState(false);
+  const [, setShowNewRequest] = useState(false);
 
   const handleNewRequest = () => {
     setShowNewRequest(true);
-    // This could trigger a modal or navigate to a new request page
-    // For now, just toggle the state
   };
 
   return (
-    <div className="flex h-screen bg-[var(--bg-primary)]">
-      {/* Sidebar */}
+    <div className="flex min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
       <Sidebar />
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col ml-64">
-        {/* Topbar */}
         <Topbar title={title} onNewRequest={handleNewRequest} />
 
-        {/* Main Content */}
-        <main className="flex-1 overflow-auto mt-16 p-6">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 mt-14">
+          <div className="max-w-[1200px] mx-auto px-10 py-10">
             {children}
           </div>
         </main>

@@ -118,47 +118,67 @@ function DayDetailPanel({ date, events, onClose, onEventClick }: DayDetailPanelP
   });
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[var(--bg-card)] rounded-lg border border-[var(--border)] max-w-md w-full max-h-[80vh] overflow-y-auto">
-        <div className="sticky top-0 bg-[var(--bg-card)] border-b border-[var(--border)] p-4 flex justify-between items-center">
-          <h2 className="font-semibold text-[var(--text-primary)]">{dateStr}</h2>
+    <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '16px' }}>
+      <div style={{ backgroundColor: 'var(--bg-card)', borderRadius: '10px', border: '1px solid var(--border)', maxWidth: '448px', width: '100%', maxHeight: '80vh', overflowY: 'auto', boxShadow: 'var(--shadow-md)' }}>
+        <div style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg-card)', borderBottom: '1px solid var(--border)', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 10 }}>
+          <h2 style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '14px' }}>{dateStr}</h2>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-[var(--bg-tertiary)] rounded transition-colors"
+            style={{
+              padding: '4px',
+              borderRadius: '4px',
+              border: 'none',
+              backgroundColor: 'transparent',
+              cursor: 'pointer',
+              color: 'var(--text-secondary)',
+              transition: 'background-color 120ms ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
           >
             <X size={20} />
           </button>
         </div>
 
         {events.length === 0 ? (
-          <div className="p-4 text-center text-[var(--text-muted)]">
+          <div style={{ padding: '16px', textAlign: 'center', color: 'var(--text-muted)' }}>
             <p>No content scheduled for this date</p>
-            <button className="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded text-sm bg-[var(--accent)] text-white hover:opacity-90 transition-opacity">
+            <button style={{ marginTop: '12px', display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '6px', fontSize: '13px', fontWeight: 500, backgroundColor: 'var(--accent)', color: 'white', border: 'none', cursor: 'pointer', transition: 'opacity 120ms ease' }} onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')} onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}>
               <Plus size={16} /> Add Content
             </button>
           </div>
         ) : (
-          <div className="p-4 space-y-3">
+          <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {events.map((event) => (
               <button
                 key={event.id}
                 onClick={() => onEventClick(event)}
-                className={`w-full text-left p-3 rounded border transition-colors cursor-pointer ${
-                  event.type === 'request'
-                    ? `${typeColors[event.requestType || 'Graphics'].bg} ${typeColors[event.requestType || 'Graphics'].border}`
-                    : 'bg-slate-50 border border-slate-200 hover:bg-slate-100'
-                }`}
+                style={{
+                  width: '100%',
+                  textAlign: 'left',
+                  padding: '12px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--border)',
+                  backgroundColor: 'var(--bg-primary)',
+                  cursor: 'pointer',
+                  transition: 'background-color 120ms ease',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-primary)')}
               >
-                <div className="font-medium text-sm text-[var(--text-primary)]">{event.title}</div>
+                <div style={{ fontWeight: 500, fontSize: '13px', color: 'var(--text-primary)', marginBottom: '4px' }}>{event.title}</div>
                 {event.platform && (
-                  <div className="mt-1 text-xs">
-                    <span className={`inline-block px-2 py-1 rounded ${platformColors[event.platform]}`}>
+                  <div style={{ marginTop: '4px', fontSize: '12px' }}>
+                    <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 550, backgroundColor: 'var(--info-bg)', color: 'var(--info)' }}>
                       {event.platform} - {event.contentType}
                     </span>
                   </div>
                 )}
                 {event.type === 'request' && event.data.assigned_to && (
-                  <div className="mt-1 text-xs text-[var(--text-secondary)]">
+                  <div style={{ marginTop: '4px', fontSize: '12px', color: 'var(--text-secondary)' }}>
                     Assigned to: {event.data.assigned_to}
                   </div>
                 )}
@@ -193,38 +213,72 @@ function CalendarCell({
   const displayEvents = events.slice(0, 2);
   const hiddenCount = events.length - displayEvents.length;
 
+  const cellStyle: React.CSSProperties = {
+    borderRight: '1px solid var(--border-light)',
+    borderBottom: '1px solid var(--border-light)',
+    minHeight: '110px',
+    padding: '8px',
+    backgroundColor: isToday ? 'var(--accent-light)' : isCurrentMonth ? 'var(--bg-card)' : 'var(--bg-tertiary)',
+    transition: 'background-color 120ms ease',
+    cursor: 'pointer',
+    color: isCurrentMonth ? 'var(--text-primary)' : 'var(--text-faint)',
+  };
+
   return (
     <div
-      className={`min-h-[120px] border border-[var(--border)] p-2 cursor-pointer transition-colors ${
-        isToday
-          ? 'bg-[var(--accent-light)] border-[var(--accent)]'
-          : isCurrentMonth
-            ? 'bg-[var(--bg-card)]'
-            : 'bg-[var(--bg-tertiary)] text-[var(--text-muted)]'
-      } hover:bg-opacity-75`}
+      style={cellStyle}
       onClick={() => onDateClick(date)}
+      onMouseEnter={(e) => {
+        if (isCurrentMonth && !isToday) {
+          (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (isCurrentMonth && !isToday) {
+          (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-card)';
+        }
+      }}
     >
-      <div className="flex justify-between items-start mb-2">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
         <span
-          className={`text-sm font-semibold ${
-            isToday ? 'text-[var(--accent)]' : 'text-[var(--text-primary)]'
-          }`}
+          style={{
+            fontSize: '12px',
+            fontWeight: 500,
+            color: isToday ? 'var(--accent-text)' : 'var(--text-primary)',
+          }}
         >
           {dayNum}
         </span>
         <button
-          className="p-1 rounded hover:bg-[var(--bg-tertiary)] transition-colors opacity-0 group-hover:opacity-100"
+          style={{
+            padding: '4px',
+            borderRadius: '4px',
+            border: 'none',
+            backgroundColor: 'transparent',
+            cursor: 'pointer',
+            color: 'var(--text-secondary)',
+            transition: 'background-color 120ms ease',
+            opacity: 0,
+          }}
           onClick={(e) => {
             e.stopPropagation();
             console.log('Add content for', date);
           }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLElement).style.backgroundColor = 'var(--bg-hover)';
+            (e.currentTarget as HTMLElement).style.opacity = '1';
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+            (e.currentTarget as HTMLElement).style.opacity = '0';
+          }}
           title="Add content"
         >
-          <Plus size={16} className="text-[var(--text-secondary)]" />
+          <Plus size={16} />
         </button>
       </div>
 
-      <div className="space-y-1">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
         {displayEvents.map((event) => (
           <div
             key={event.id}
@@ -232,17 +286,32 @@ function CalendarCell({
               e.stopPropagation();
               onEventClick(event);
             }}
-            className={`text-xs p-1.5 rounded truncate cursor-pointer hover:opacity-80 transition-opacity ${
-              event.type === 'request'
-                ? `${typeColors[event.requestType || 'Graphics'].bg} ${typeColors[event.requestType || 'Graphics'].text} ${typeColors[event.requestType || 'Graphics'].border}`
-                : `${platformColors[event.platform || 'LinkedIn']} font-medium`
-            }`}
+            style={{
+              padding: '2px 6px',
+              borderRadius: '4px',
+              fontSize: '11px',
+              fontWeight: 500,
+              marginBottom: '2px',
+              cursor: 'pointer',
+              transition: 'opacity 120ms ease',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              display: 'inline-block',
+              maxWidth: '100%',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.opacity = '0.8';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.opacity = '1';
+            }}
           >
             {event.title}
           </div>
         ))}
         {hiddenCount > 0 && (
-          <div className="text-xs text-[var(--text-secondary)] font-medium px-1.5 py-1">
+          <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 500, padding: '2px 6px' }}>
             +{hiddenCount} more
           </div>
         )}
@@ -430,141 +499,154 @@ export default function SocialCalendarPage() {
     : [];
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)]">
-      {/* Header */}
-      <div className="border-b border-[var(--border)] bg-[var(--bg-card)] p-6">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-6">
-            Social Calendar
-          </h1>
+    <div style={{ backgroundColor: 'var(--bg-primary)', minHeight: '100vh' }}>
+      {/* Page Header with Title and Description */}
+      <div className="gb-page-header flex items-start justify-between gap-6 px-6 py-8 max-w-7xl mx-auto">
+        <div>
+          <h1 className="gb-page-title">Social Calendar</h1>
+          <p className="gb-page-description">Plan and schedule social posts across all platforms. Click any day to add or edit content.</p>
+        </div>
+      </div>
 
-          {/* Filter Bar */}
-          <div className="space-y-4">
-            {/* Month Navigation */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={handlePrevMonth}
-                  className="p-2 hover:bg-[var(--bg-tertiary)] rounded-md transition-colors"
-                  aria-label="Previous month"
-                >
-                  <ChevronLeft size={20} className="text-[var(--text-secondary)]" />
-                </button>
-                <h2 className="text-2xl font-semibold text-[var(--text-primary)] min-w-[200px]">
-                  {monthYear}
-                </h2>
-                <button
-                  onClick={handleNextMonth}
-                  className="p-2 hover:bg-[var(--bg-tertiary)] rounded-md transition-colors"
-                  aria-label="Next month"
-                >
-                  <ChevronRight size={20} className="text-[var(--text-secondary)]" />
-                </button>
-              </div>
+      {/* Filter Bar */}
+      <div style={{ padding: '0 24px 24px', maxWidth: '80rem', marginLeft: 'auto', marginRight: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {/* Month Navigation */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <button
-                onClick={handleToday}
-                className="px-4 py-2 rounded-md bg-[var(--accent)] text-white hover:opacity-90 transition-opacity font-medium text-sm"
+                onClick={handlePrevMonth}
+                className="gb-icon-btn"
+                aria-label="Previous month"
               >
-                Today
+                <ChevronLeft size={20} />
+              </button>
+              <h2 style={{ fontSize: '17px', fontWeight: 600, color: 'var(--text-primary)', minWidth: '200px', textAlign: 'center' }}>
+                {monthYear}
+              </h2>
+              <button
+                onClick={handleNextMonth}
+                className="gb-icon-btn"
+                aria-label="Next month"
+              >
+                <ChevronRight size={20} />
               </button>
             </div>
+            <button
+              onClick={handleToday}
+              className="gb-btn gb-btn-primary"
+            >
+              Today
+            </button>
+          </div>
 
-            {/* Platform Filter */}
-            <div>
-              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
-                Platform
-              </label>
-              <div className="flex gap-2 flex-wrap">
-                {platformOptions.map((platform) => (
-                  <button
-                    key={platform}
-                    onClick={() => setPlatformFilter(platform)}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                      platformFilter === platform
-                        ? 'bg-[var(--accent)] text-white'
-                        : 'bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:bg-[var(--border)]'
-                    }`}
-                  >
-                    {platform}
-                  </button>
-                ))}
-              </div>
+          {/* Platform Filter */}
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '8px' }}>
+              Platform
+            </label>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {platformOptions.map((platform) => (
+                <button
+                  key={platform}
+                  onClick={() => setPlatformFilter(platform)}
+                  className="gb-btn gb-btn-secondary"
+                  style={
+                    platformFilter === platform
+                      ? { backgroundColor: 'var(--accent-light)', color: 'var(--accent-text)', borderColor: 'var(--accent)' }
+                      : undefined
+                  }
+                >
+                  {platform}
+                </button>
+              ))}
             </div>
+          </div>
 
-            {/* Type Filter */}
-            <div>
-              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
-                Content Type
-              </label>
-              <div className="flex gap-2 flex-wrap">
-                {typeOptions.map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setTypeFilter(type)}
-                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                      typeFilter === type
-                        ? 'bg-[var(--accent)] text-white'
-                        : 'bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:bg-[var(--border)]'
-                    }`}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
+          {/* Type Filter */}
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '8px' }}>
+              Content Type
+            </label>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {typeOptions.map((type) => (
+                <button
+                  key={type}
+                  onClick={() => setTypeFilter(type)}
+                  className="gb-btn gb-btn-secondary"
+                  style={
+                    typeFilter === type
+                      ? { backgroundColor: 'var(--accent-light)', color: 'var(--accent-text)', borderColor: 'var(--accent)' }
+                      : undefined
+                  }
+                >
+                  {type}
+                </button>
+              ))}
             </div>
+          </div>
 
-            {/* Search */}
-            <div>
-              <label className="block text-sm font-medium text-[var(--text-secondary)] mb-2">
-                Search
-              </label>
-              <input
-                type="text"
-                placeholder="Search content by title..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="input-base w-full"
-              />
-            </div>
+          {/* Search */}
+          <div>
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '8px' }}>
+              Search
+            </label>
+            <input
+              type="text"
+              placeholder="Search content by title..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="gb-input"
+            />
           </div>
         </div>
       </div>
 
       {/* Calendar Grid */}
-      <div className="p-6 max-w-7xl mx-auto">
-        {/* Weekday Headers */}
-        <div className="grid grid-cols-7 gap-px mb-px">
-          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-            <div
-              key={day}
-              className="bg-[var(--bg-card)] border border-[var(--border)] p-3 text-center font-semibold text-[var(--text-secondary)] text-sm"
-            >
-              {day}
-            </div>
-          ))}
-        </div>
+      <div style={{ padding: '24px', maxWidth: '80rem', marginLeft: 'auto', marginRight: 'auto' }}>
+        <div className="gb-card" style={{ overflow: 'hidden' }}>
+          {/* Weekday Headers */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid var(--border)', backgroundColor: 'var(--bg-tertiary)' }}>
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+              <div
+                key={day}
+                style={{
+                  padding: '10px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  color: 'var(--text-muted)',
+                  textAlign: 'center',
+                }}
+              >
+                {day}
+              </div>
+            ))}
+          </div>
 
-        {/* Calendar Days */}
-        <div className="grid grid-cols-7 gap-px bg-[var(--border)] p-px group">
-          {calendarDays.map((day, idx) => {
-            const isToday =
-              day.isCurrentMonth &&
-              new Date(day.date).toDateString() === today.toDateString();
-            const dayEvents = eventsByDate[day.date] || [];
+          {/* Calendar Days */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+            {calendarDays.map((day, idx) => {
+              const isToday =
+                day.isCurrentMonth &&
+                new Date(day.date).toDateString() === today.toDateString();
+              const dayEvents = eventsByDate[day.date] || [];
 
-            return (
-              <CalendarCell
-                key={idx}
-                dayNum={day.dayNum}
-                date={day.date}
-                events={dayEvents}
-                isToday={isToday}
-                isCurrentMonth={day.isCurrentMonth}
-                onDateClick={handleDateClick}
-                onEventClick={handleEventClick}
-              />
-            );
-          })}
+              return (
+                <CalendarCell
+                  key={idx}
+                  dayNum={day.dayNum}
+                  date={day.date}
+                  events={dayEvents}
+                  isToday={isToday}
+                  isCurrentMonth={day.isCurrentMonth}
+                  onDateClick={handleDateClick}
+                  onEventClick={handleEventClick}
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -580,24 +662,37 @@ export default function SocialCalendarPage() {
 
       {/* Event Detail Alert (simple for now) */}
       {selectedEvent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-[var(--bg-card)] rounded-lg border border-[var(--border)] max-w-md w-full p-6">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '16px' }}>
+          <div style={{ backgroundColor: 'var(--bg-card)', borderRadius: '10px', border: '1px solid var(--border)', boxShadow: 'var(--shadow-md)', maxWidth: '448px', width: '100%', padding: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>
                 {selectedEvent.title}
               </h3>
               <button
                 onClick={() => setSelectedEvent(null)}
-                className="p-1 hover:bg-[var(--bg-tertiary)] rounded transition-colors"
+                style={{
+                  padding: '4px',
+                  borderRadius: '4px',
+                  backgroundColor: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--text-secondary)',
+                  transition: 'background-color 120ms ease',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'var(--bg-hover)')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
               >
                 <X size={20} />
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <p className="text-xs text-[var(--text-secondary)] font-medium mb-1">Date</p>
-                <p className="text-sm text-[var(--text-primary)]">
+                <p style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '4px' }}>Date</p>
+                <p style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
                   {new Date(selectedEvent.date).toLocaleDateString('en-US', {
                     weekday: 'long',
                     year: 'numeric',
@@ -610,26 +705,26 @@ export default function SocialCalendarPage() {
               {selectedEvent.type === 'request' ? (
                 <>
                   <div>
-                    <p className="text-xs text-[var(--text-secondary)] font-medium mb-1">
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '4px' }}>
                       Type
                     </p>
-                    <p className="text-sm text-[var(--text-primary)]">
+                    <p style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
                       {selectedEvent.requestType}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-[var(--text-secondary)] font-medium mb-1">
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '4px' }}>
                       Status
                     </p>
-                    <p className="text-sm text-[var(--text-primary)]">
+                    <p style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
                       {selectedEvent.data.current_stage}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-[var(--text-secondary)] font-medium mb-1">
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '4px' }}>
                       Assigned To
                     </p>
-                    <p className="text-sm text-[var(--text-primary)]">
+                    <p style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
                       {selectedEvent.data.assigned_to || 'Unassigned'}
                     </p>
                   </div>
@@ -637,27 +732,27 @@ export default function SocialCalendarPage() {
               ) : (
                 <>
                   <div>
-                    <p className="text-xs text-[var(--text-secondary)] font-medium mb-1">
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '4px' }}>
                       Platform
                     </p>
-                    <p className="text-sm text-[var(--text-primary)]">
+                    <p style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
                       {selectedEvent.platform}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-[var(--text-secondary)] font-medium mb-1">
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '4px' }}>
                       Content Type
                     </p>
-                    <p className="text-sm text-[var(--text-primary)]">
+                    <p style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
                       {selectedEvent.contentType}
                     </p>
                   </div>
                   {selectedEvent.data.caption && (
                     <div>
-                      <p className="text-xs text-[var(--text-secondary)] font-medium mb-1">
+                      <p style={{ fontSize: '12px', color: 'var(--text-secondary)', fontWeight: 500, marginBottom: '4px' }}>
                         Caption
                       </p>
-                      <p className="text-sm text-[var(--text-primary)]">
+                      <p style={{ fontSize: '13px', color: 'var(--text-primary)' }}>
                         {selectedEvent.data.caption}
                       </p>
                     </div>
@@ -668,7 +763,8 @@ export default function SocialCalendarPage() {
 
             <button
               onClick={() => setSelectedEvent(null)}
-              className="mt-6 w-full px-4 py-2 rounded-md bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:bg-[var(--border)] transition-colors font-medium text-sm"
+              className="gb-btn gb-btn-secondary"
+              style={{ marginTop: '24px', width: '100%' }}
             >
               Close
             </button>

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Papa from 'papaparse';
 import { Request } from '@/types';
 import { SAMPLE_REQUESTS } from '@/lib/sample-data';
+import { FileDown, Upload, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface ImportRow {
   Type: string;
@@ -24,6 +25,7 @@ export default function DownloadsUploadsPage() {
   const [previewData, setPreviewData] = useState<ImportRow[]>([]);
   const [fileName, setFileName] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // Generate CSV template
   const downloadTemplate = () => {
@@ -52,6 +54,8 @@ export default function DownloadsUploadsPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    setStatusMessage({ type: 'success', message: 'Template downloaded successfully!' });
+    setTimeout(() => setStatusMessage(null), 3000);
   };
 
   // Handle file upload
@@ -69,11 +73,12 @@ export default function DownloadsUploadsPage() {
         const rows = results.data as ImportRow[];
         setPreviewData(rows.slice(0, 10));
         setIsProcessing(false);
+        setStatusMessage({ type: 'success', message: `${rows.length} rows loaded and ready to preview.` });
       },
       error: (error: any) => {
         console.error('CSV parse error:', error);
         setIsProcessing(false);
-        alert('Error parsing file: ' + error.message);
+        setStatusMessage({ type: 'error', message: 'Error parsing file: ' + error.message });
       },
     });
   };
@@ -101,7 +106,8 @@ export default function DownloadsUploadsPage() {
     setImportedRequests(newRequests);
     setPreviewData([]);
     setFileName('');
-    alert(`Successfully imported ${newRequests.length} entries!`);
+    setStatusMessage({ type: 'success', message: `Successfully imported ${newRequests.length} entries!` });
+    setTimeout(() => setStatusMessage(null), 4000);
   };
 
   // Export all requests
@@ -144,192 +150,158 @@ export default function DownloadsUploadsPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    setStatusMessage({ type: 'success', message: 'Export completed successfully!' });
+    setTimeout(() => setStatusMessage(null), 3000);
   };
 
   const handleCancel = () => {
     setPreviewData([]);
     setFileName('');
+    setStatusMessage(null);
     const fileInput = document.getElementById('file-upload') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] p-6">
+    <div style={{ backgroundColor: 'var(--bg-primary)' }} className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-8">Downloads & Uploads</h1>
+        {/* Page Header */}
+        <div className="gb-page-header">
+          <h1 className="gb-page-title">Downloads & Uploads</h1>
+          <p className="gb-page-description">
+            Import a social calendar to auto-create requests, or download a CSV template to populate offline.
+          </p>
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Column - Import Section */}
-          <div className="space-y-6">
-            <div className="card p-6">
-              <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-2">Import Social Calendar</h2>
-              <p className="text-[var(--text-secondary)] mb-6">
-                Import your social calendar data using a CSV or XLS file. Download our template to get started with the correct format.
-              </p>
+        {/* Status Message */}
+        {statusMessage && (
+          <div
+            style={{
+              backgroundColor: statusMessage.type === 'success' ? 'var(--success-bg)' : 'var(--error-bg)',
+              color: statusMessage.type === 'success' ? 'var(--success)' : 'var(--error)',
+            }}
+            className="flex items-center gap-2 mb-6 rounded-[var(--radius)] border border-current border-opacity-20 p-3"
+          >
+            {statusMessage.type === 'success' ? (
+              <CheckCircle size={16} />
+            ) : (
+              <AlertCircle size={16} />
+            )}
+            <span className="text-sm font-medium">{statusMessage.message}</span>
+          </div>
+        )}
 
-              {/* Download Template Button */}
-              <button
-                onClick={downloadTemplate}
-                className="w-full mb-6 px-4 py-2 bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-lg font-medium hover:bg-[var(--bg-secondary)] transition-colors border border-[var(--border)]"
-              >
-                Download Template
-              </button>
-
-              {/* Drop Zone */}
-              {previewData.length === 0 ? (
-                <div className="border-2 border-dashed border-[var(--border)] rounded-lg p-8 text-center mb-6 hover:border-[var(--accent)] transition-colors cursor-pointer group"
-                  onClick={() => document.getElementById('file-upload')?.click()}
-                >
-                  <svg
-                    className="mx-auto h-12 w-12 text-[var(--text-muted)] group-hover:text-[var(--accent)] transition-colors"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  <p className="mt-2 text-[var(--text-primary)] font-medium">Click to upload CSV / XLS</p>
-                  <p className="text-[var(--text-muted)] text-sm">Supports .csv and .xls</p>
-
-                  <input
-                    id="file-upload"
-                    type="file"
-                    accept=".csv,.xls,.xlsx"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                </div>
-              ) : (
-                <div className="mb-6">
-                  <p className="text-sm text-[var(--text-secondary)] mb-3">Preview (first 10 rows)</p>
-                  <div className="overflow-x-auto border border-[var(--border)] rounded-lg">
-                    <table className="w-full text-sm">
-                      <thead className="bg-[var(--bg-tertiary)] border-b border-[var(--border)]">
-                        <tr>
-                          <th className="px-3 py-2 text-left text-[var(--text-primary)] font-medium">Type</th>
-                          <th className="px-3 py-2 text-left text-[var(--text-primary)] font-medium">Title</th>
-                          <th className="px-3 py-2 text-left text-[var(--text-primary)] font-medium">Requestor</th>
-                          <th className="px-3 py-2 text-left text-[var(--text-primary)] font-medium">Need By</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {previewData.map((row, idx) => (
-                          <tr key={idx} className="border-b border-[var(--border)] hover:bg-[var(--bg-secondary)]">
-                            <td className="px-3 py-2 text-[var(--text-primary)]">{row.Type}</td>
-                            <td className="px-3 py-2 text-[var(--text-primary)] truncate">{row.Title}</td>
-                            <td className="px-3 py-2 text-[var(--text-primary)]">{row.Requestor}</td>
-                            <td className="px-3 py-2 text-[var(--text-primary)]">{row['Need By']}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              {previewData.length > 0 && (
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleImport}
-                    disabled={isProcessing}
-                    className="flex-1 px-4 py-2 bg-[var(--accent)] text-white rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-                  >
-                    Import {previewData.length} Entries
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    disabled={isProcessing}
-                    className="flex-1 px-4 py-2 bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-lg font-medium hover:bg-[var(--bg-secondary)] transition-colors border border-[var(--border)] disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              )}
+        {/* Two-Card Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Card 1: Download Template */}
+          <div className="gb-card" style={{ padding: '24px' }}>
+            <div className="flex items-start gap-3 mb-4">
+              <FileDown size={20} style={{ color: 'var(--accent)', marginTop: '2px' }} />
+              <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>Download Template</h2>
             </div>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: '1.5' }}>
+              Get the standard social calendar CSV template with all required columns.
+            </p>
+            <button onClick={downloadTemplate} className="gb-btn gb-btn-primary w-full">
+              <FileDown size={14} />
+              Download CSV Template
+            </button>
+          </div>
 
-            {/* Imported Requests Preview */}
-            {importedRequests.length > 0 && (
-              <div className="card p-6 bg-[var(--bg-secondary)]">
-                <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-4">Recently Imported</h3>
-                <div className="space-y-2">
-                  {importedRequests.map(req => (
-                    <div key={req.id} className="p-3 bg-[var(--bg-primary)] rounded border border-[var(--border)]">
-                      <p className="font-medium text-[var(--text-primary)]">{req.title}</p>
-                      <p className="text-sm text-[var(--text-secondary)]">{req.type}</p>
-                    </div>
-                  ))}
+          {/* Card 2: Upload Social Calendar */}
+          <div className="gb-card" style={{ padding: '24px' }}>
+            <div className="flex items-start gap-3 mb-4">
+              <Upload size={20} style={{ color: 'var(--accent)', marginTop: '2px' }} />
+              <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>Upload Social Calendar</h2>
+            </div>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.5' }}>
+              Import your social calendar data to auto-create requests with the correct format.
+            </p>
+
+            {previewData.length === 0 ? (
+              <div
+                onClick={() => document.getElementById('file-upload')?.click()}
+                style={{
+                  border: '2px dashed var(--border-strong)',
+                  borderRadius: '8px',
+                  padding: '32px',
+                  textAlign: 'center',
+                  backgroundColor: 'var(--bg-tertiary)',
+                  cursor: 'pointer',
+                  transition: 'all 120ms ease',
+                }}
+                className="group hover:border-[var(--accent)]"
+              >
+                <Upload size={32} style={{ color: 'var(--text-muted)', margin: '0 auto 12px' }} />
+                <p style={{ color: 'var(--text-primary)', fontWeight: 500, marginBottom: '4px' }}>Click to upload CSV</p>
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>or drag and drop (CSV, XLS, XLSX)</p>
+
+                <input
+                  id="file-upload"
+                  type="file"
+                  accept=".csv,.xls,.xlsx"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </div>
+            ) : (
+              <div className="mb-4">
+                <h3 className="gb-section-title">Preview</h3>
+                <div className="gb-card overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+                  <table className="gb-table">
+                    <thead>
+                      <tr>
+                        <th>Type</th>
+                        <th>Title</th>
+                        <th>Requestor</th>
+                        <th>Need By</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewData.map((row, idx) => (
+                        <tr key={idx}>
+                          <td>{row.Type}</td>
+                          <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {row.Title}
+                          </td>
+                          <td>{row.Requestor}</td>
+                          <td>{row['Need By']}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
-          </div>
 
-          {/* Right Column - Export Section */}
-          <div className="space-y-6">
-            <div className="card p-6">
-              <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-2">Export Data</h2>
-              <p className="text-[var(--text-secondary)] mb-6">
-                Export all your request data in CSV format for backup, analysis, or sharing with your team.
-              </p>
-
-              <button
-                onClick={handleExportAll}
-                className="w-full px-4 py-2 bg-[var(--accent)] text-white rounded-lg font-medium hover:opacity-90 transition-opacity mb-6"
-              >
-                Export All Requests
-              </button>
-
-              <div className="p-4 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border)]">
-                <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Template Columns Reference</h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="font-medium text-[var(--text-primary)] text-sm">Type</p>
-                    <p className="text-xs text-[var(--text-secondary)]">Video / Social Media Graphics / Graphics</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-[var(--text-primary)] text-sm">Requested By</p>
-                    <p className="text-xs text-[var(--text-secondary)]">Team name (Social Team, Management, Sales Team, etc.)</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-[var(--text-primary)] text-sm">Title</p>
-                    <p className="text-xs text-[var(--text-secondary)]">Short descriptive title of the request</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-[var(--text-primary)] text-sm">Description</p>
-                    <p className="text-xs text-[var(--text-secondary)]">Brief description of the requirement</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-[var(--text-primary)] text-sm">Requestor</p>
-                    <p className="text-xs text-[var(--text-secondary)]">Name of the person who requested</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-[var(--text-primary)] text-sm">Need By</p>
-                    <p className="text-xs text-[var(--text-secondary)]">Due date in YYYY-MM-DD format</p>
-                  </div>
-                  <div>
-                    <p className="font-medium text-[var(--text-primary)] text-sm">Reference Link</p>
-                    <p className="text-xs text-[var(--text-secondary)]">Optional URL for additional context</p>
-                  </div>
-                </div>
+            {/* Action Buttons */}
+            {previewData.length > 0 && (
+              <div className="flex gap-3 mt-4">
+                <button onClick={handleImport} disabled={isProcessing} className="gb-btn gb-btn-primary flex-1">
+                  Import {previewData.length} Entries
+                </button>
+                <button onClick={handleCancel} disabled={isProcessing} className="gb-btn gb-btn-secondary flex-1">
+                  Cancel
+                </button>
               </div>
-            </div>
-
-            <div className="card p-6 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-              <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-2">Total Requests</h3>
-              <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
-                {SAMPLE_REQUESTS.length + importedRequests.length}
-              </p>
-              <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
-                {SAMPLE_REQUESTS.length} sample + {importedRequests.length} imported
-              </p>
-            </div>
+            )}
           </div>
         </div>
+
+        {/* Imported Requests Section */}
+        {importedRequests.length > 0 && (
+          <div className="mt-6">
+            <h3 className="gb-section-title">Recently Imported</h3>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {importedRequests.map(req => (
+                <div key={req.id} className="gb-card gb-card-hover p-4">
+                  <p style={{ fontWeight: 500, color: 'var(--text-primary)', marginBottom: '4px' }}>{req.title}</p>
+                  <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>{req.type}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

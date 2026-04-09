@@ -1,15 +1,26 @@
 'use client';
-import { Search, Sun, Moon, Plus } from 'lucide-react';
+import { Search, Sun, Moon, Plus, ChevronRight } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 interface TopbarProps {
   title: string;
   onNewRequest?: () => void;
 }
 
+const breadcrumbMap: Record<string, { section: string; sectionHref: string; label: string }> = {
+  '/design-ops/dashboard': { section: 'Design Ops', sectionHref: '/design-ops/dashboard', label: 'Dashboard' },
+  '/design-ops/social-calendar': { section: 'Design Ops', sectionHref: '/design-ops/dashboard', label: 'Social Calendar' },
+  '/design-ops/requests': { section: 'Design Ops', sectionHref: '/design-ops/dashboard', label: 'All Requests' },
+  '/design-ops/downloads': { section: 'Design Ops', sectionHref: '/design-ops/dashboard', label: 'Downloads / Uploads' },
+  '/user-management': { section: 'Admin', sectionHref: '/user-management', label: 'User Management' },
+};
+
 export default function Topbar({ title, onNewRequest }: TopbarProps) {
   const { theme, setTheme } = useTheme();
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -20,50 +31,54 @@ export default function Topbar({ title, onNewRequest }: TopbarProps) {
     setTheme(theme === 'light' ? 'dark' : 'light');
   };
 
-  return (
-    <div className="h-16 bg-[var(--bg-secondary)] border-b border-[var(--border)] flex items-center justify-between px-6 fixed top-0 right-0 left-64 z-40">
-      {/* Left: Title */}
-      <h1 className="text-2xl font-bold text-[var(--text-primary)]">{title}</h1>
+  const crumb = breadcrumbMap[pathname] ?? { section: 'Workspace', sectionHref: '/', label: title };
 
-      {/* Right: Search, Theme Toggle, New Request */}
-      <div className="flex items-center gap-4">
-        {/* Search Input */}
-        <div className="relative hidden md:flex">
-          <Search
-            size={18}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]"
-          />
-          <input
-            type="text"
-            placeholder="Search..."
-            className="input-base pl-10 pr-4 w-64 text-sm"
-          />
+  return (
+    <header className="gb-topbar h-14 flex items-center justify-between px-6 fixed top-0 right-0 left-64 z-40">
+      {/* Left: Breadcrumb */}
+      <div className="gb-breadcrumb">
+        <Link href={crumb.sectionHref} className="gb-breadcrumb-link">
+          {crumb.section}
+        </Link>
+        <ChevronRight size={13} strokeWidth={2} style={{ color: 'var(--text-faint)' }} />
+        <span className="gb-breadcrumb-current">{crumb.label}</span>
+      </div>
+
+      {/* Right: Search + actions */}
+      <div className="flex items-center gap-2">
+        {/* Search */}
+        <div className="hidden md:flex w-72">
+          <div className="gb-search">
+            <Search size={14} strokeWidth={1.75} style={{ color: 'var(--text-faint)' }} />
+            <input type="text" placeholder="Search requests, users, calendar..." />
+            <kbd>⌘K</kbd>
+          </div>
         </div>
 
-        {/* Theme Toggle */}
+        {/* Theme toggle */}
         {mounted && (
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-lg hover:bg-[var(--bg-tertiary)] transition-colors text-[var(--text-secondary)]"
+            className="gb-icon-btn"
             title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
           >
             {theme === 'light' ? (
-              <Moon size={20} />
+              <Moon size={15} strokeWidth={1.75} />
             ) : (
-              <Sun size={20} />
+              <Sun size={15} strokeWidth={1.75} />
             )}
           </button>
         )}
 
-        {/* New Request Button */}
-        <button
-          onClick={onNewRequest}
-          className="topbar-button button-primary gap-2"
-        >
-          <Plus size={18} />
+        {/* Divider */}
+        <div className="w-px h-5 mx-1" style={{ backgroundColor: 'var(--border)' }} />
+
+        {/* New Request */}
+        <button onClick={onNewRequest} className="gb-btn gb-btn-primary">
+          <Plus size={14} strokeWidth={2.25} />
           <span>New Request</span>
         </button>
       </div>
-    </div>
+    </header>
   );
 }

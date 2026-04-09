@@ -84,28 +84,28 @@ export default function AllRequestsPage() {
     return Array.from(stagesWithRequests).sort();
   }, [filteredRequests]);
 
-  // Type color map
+  // Type color map for badges
   const typeColors: Record<RequestType, { badge: string; dot: string }> = {
-    Video: { badge: 'bg-blue-100 text-blue-800', dot: 'bg-blue-500' },
-    'Social Media Graphics': { badge: 'bg-green-100 text-green-800', dot: 'bg-green-500' },
-    Graphics: { badge: 'bg-pink-100 text-pink-800', dot: 'bg-pink-500' }
+    Video: { badge: 'gb-badge-blue', dot: 'var(--info)' },
+    'Social Media Graphics': { badge: 'gb-badge-green', dot: 'var(--success)' },
+    Graphics: { badge: 'gb-badge-yellow', dot: 'var(--warning)' }
   };
 
-  // Stage color map
-  const stageColors: Record<string, string> = {
-    'Done': 'bg-green-100 text-green-800 border-t-4 border-green-500',
-    'Uploaded': 'bg-green-100 text-green-800 border-t-4 border-green-500',
-    'Change Req': 'bg-red-100 text-red-800 border-t-4 border-red-500',
-    'Assigned': 'bg-blue-100 text-blue-800 border-t-4 border-blue-500',
-    'Ready to Upload': 'bg-yellow-100 text-yellow-800 border-t-4 border-yellow-500',
-    'Design Done': 'bg-yellow-100 text-yellow-800 border-t-4 border-yellow-500',
-    'Editing Done': 'bg-yellow-100 text-yellow-800 border-t-4 border-yellow-500',
-    'Shoot Done': 'bg-yellow-100 text-yellow-800 border-t-4 border-yellow-500',
-    'Design In Progress': 'bg-blue-50 text-blue-900 border-t-4 border-blue-400',
-    'Editing In Progress': 'bg-blue-50 text-blue-900 border-t-4 border-blue-400',
-    'Content': 'bg-blue-50 text-blue-900 border-t-4 border-blue-400',
-    'Planning': 'bg-blue-50 text-blue-900 border-t-4 border-blue-400',
-    'Shooting Scheduled': 'bg-blue-50 text-blue-900 border-t-4 border-blue-400'
+  // Stage badge classes map
+  const stageBadgeClasses: Record<string, string> = {
+    'Done': 'gb-badge-green',
+    'Uploaded': 'gb-badge-green',
+    'Change Req': 'gb-badge-red',
+    'Assigned': 'gb-badge-blue',
+    'Ready to Upload': 'gb-badge-yellow',
+    'Design Done': 'gb-badge-yellow',
+    'Editing Done': 'gb-badge-yellow',
+    'Shoot Done': 'gb-badge-yellow',
+    'Design In Progress': 'gb-badge-blue',
+    'Editing In Progress': 'gb-badge-blue',
+    'Content': 'gb-badge-blue',
+    'Planning': 'gb-badge-blue',
+    'Shooting Scheduled': 'gb-badge-blue'
   };
 
   const toggleTypeFilter = (type: RequestType) => {
@@ -167,38 +167,24 @@ export default function AllRequestsPage() {
   }, [filteredRequests]);
 
   const renderListView = () => (
-    <div className="card overflow-hidden">
+    <div className="gb-card overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-[var(--bg-secondary)] border-b border-[var(--border)]">
+        <table className="gb-table">
+          <thead>
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider">
-                Title
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider">
-                Type
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider">
-                Requested By
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider">
-                Requestor
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider">
-                Stage
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider">
-                Design POC
-              </th>
+              <th>Title</th>
+              <th>Type</th>
+              <th>Requested By</th>
+              <th>Requestor</th>
+              <th>Stage</th>
+              <th>Design POC</th>
               <th
-                className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider cursor-pointer hover:bg-[var(--bg-tertiary)]"
                 onClick={() => handleSort('need_by')}
+                style={{ cursor: 'pointer' }}
               >
                 Need By {sortField === 'need_by' && (sortAscending ? '↑' : '↓')}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-primary)] uppercase tracking-wider">
-                TAT
-              </th>
+              <th>TAT</th>
             </tr>
           </thead>
           <tbody>
@@ -209,37 +195,38 @@ export default function AllRequestsPage() {
                 <tr
                   key={req.id}
                   onClick={() => setSelectedRow(selectedRow === req.id ? null : req.id)}
-                  className={`border-b border-[var(--border)] hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer ${
-                    isRowOverdue ? 'bg-red-50 dark:bg-red-950' : ''
-                  }`}
+                  style={{
+                    backgroundColor: isRowOverdue ? 'var(--error-bg)' : 'transparent',
+                    cursor: 'pointer'
+                  }}
                 >
-                  <td className="px-6 py-4 text-sm font-medium text-[var(--text-primary)]">
+                  <td style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
                     {req.title}
                   </td>
-                  <td className="px-6 py-4 text-sm">
-                    <span className={`badge ${typeColors[req.type].badge} text-xs`}>
+                  <td>
+                    <span className={`gb-badge ${typeColors[req.type].badge}`}>
                       {req.type === 'Social Media Graphics' ? 'SMG' : req.type}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">
+                  <td style={{ color: 'var(--text-secondary)' }}>
                     {req.requested_by}
                   </td>
-                  <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">
+                  <td style={{ color: 'var(--text-secondary)' }}>
                     {req.requestor_name}
                   </td>
-                  <td className="px-6 py-4 text-sm">
-                    <span className={`badge ${stageColors[req.current_stage] || 'bg-gray-100 text-gray-800'}`}>
+                  <td>
+                    <span className={`gb-badge ${stageBadgeClasses[req.current_stage] || 'gb-badge-gray'}`}>
                       {req.current_stage}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">
+                  <td style={{ color: 'var(--text-secondary)' }}>
                     {assignee ? assignee.name : 'Unassigned'}
                   </td>
-                  <td className={`px-6 py-4 text-sm font-medium ${isRowOverdue ? 'text-red-600' : 'text-[var(--text-secondary)]'}`}>
+                  <td style={{ fontWeight: 500, color: isRowOverdue ? 'var(--error)' : 'var(--text-secondary)' }}>
                     {formatDate(req.need_by)}
-                    {isRowOverdue && <span className="ml-2 text-red-600 font-bold">OVERDUE</span>}
+                    {isRowOverdue && <span style={{ marginLeft: '8px', fontWeight: 'bold', color: 'var(--error)' }}>OVERDUE</span>}
                   </td>
-                  <td className="px-6 py-4 text-sm text-[var(--text-secondary)]">
+                  <td style={{ color: 'var(--text-secondary)' }}>
                     {getTotalTAT(req)}h
                   </td>
                 </tr>
@@ -248,7 +235,7 @@ export default function AllRequestsPage() {
           </tbody>
         </table>
       </div>
-      <div className="px-6 py-3 bg-[var(--bg-secondary)] border-t border-[var(--border)] text-sm text-[var(--text-secondary)]">
+      <div style={{ padding: '12px 14px', backgroundColor: 'var(--bg-tertiary)', borderTop: '1px solid var(--border)', fontSize: '13px', color: 'var(--text-secondary)' }}>
         {filteredRequests.length} of {SAMPLE_REQUESTS.length} requests
       </div>
     </div>
@@ -262,17 +249,18 @@ export default function AllRequestsPage() {
           return (
             <div
               key={stage}
-              className="flex-shrink-0 w-80 bg-[var(--bg-secondary)] rounded-lg border border-[var(--border)]"
+              className="flex-shrink-0 w-80 gb-card"
+              style={{ display: 'flex', flexDirection: 'column' }}
               onDragOver={handleDragOver}
               onDrop={e => handleDrop(e, stage)}
             >
-              <div className="p-4 border-b border-[var(--border)]">
-                <h3 className="font-semibold text-[var(--text-primary)]">
+              <div style={{ padding: '16px', borderBottom: '1px solid var(--border)' }}>
+                <h3 style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {stage}
-                  <span className="ml-2 badge badge-blue text-xs">{stageRequests.length}</span>
+                  <span className="gb-badge gb-badge-blue" style={{ marginLeft: '8px' }}>{stageRequests.length}</span>
                 </h3>
               </div>
-              <div className="max-h-96 overflow-y-auto space-y-3 p-4">
+              <div style={{ maxHeight: '384px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px' }}>
                 {stageRequests.map(req => {
                   const assignee = getUserById(req.assigned_to);
                   const daysUntilDue = getDaysUntilDue(req.need_by);
@@ -284,31 +272,32 @@ export default function AllRequestsPage() {
                       key={req.id}
                       draggable
                       onDragStart={e => handleDragStart(e, req)}
-                      className="p-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-md cursor-move hover:shadow-md transition-shadow"
+                      className="gb-card gb-card-hover"
+                      style={{ padding: '12px', cursor: 'move' }}
                     >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <span className={`badge ${typeColors[req.type].badge} text-xs`}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '8px' }}>
+                        <span className={`gb-badge ${typeColors[req.type].badge}`}>
                           {req.type === 'Social Media Graphics' ? 'SMG' : req.type}
                         </span>
                       </div>
-                      <h4 className="font-semibold text-sm text-[var(--text-primary)] mb-1 line-clamp-2">
+                      <h4 style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)', marginBottom: '8px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                         {req.title}
                       </h4>
-                      <p className="text-xs text-[var(--text-muted)] mb-3">
+                      <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
                         {req.requestor_name}
                       </p>
-                      <div className="flex items-center justify-between pt-2 border-t border-[var(--border)]">
-                        <div className="flex items-center gap-2">
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid var(--border)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           {assignee && (
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${typeColors[req.type].dot.replace('bg-', 'bg-')}`}>
+                            <div style={{ width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold', color: 'white', backgroundColor: typeColors[req.type].dot }}>
                               {getInitials(assignee.name)}
                             </div>
                           )}
-                          <span className="text-xs text-[var(--text-secondary)]">
+                          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                             {assignee ? assignee.name.split(' ')[0] : 'Unassigned'}
                           </span>
                         </div>
-                        <span className={`text-xs font-medium ${isOverdueReq ? 'text-red-600' : isDueSoon ? 'text-yellow-600' : 'text-[var(--text-muted)]'}`}>
+                        <span style={{ fontSize: '12px', fontWeight: 500, color: isOverdueReq ? 'var(--error)' : isDueSoon ? 'var(--warning)' : 'var(--text-muted)' }}>
                           {isOverdueReq ? 'OVERDUE' : isDueSoon ? 'Due soon' : formatDate(req.need_by)}
                         </span>
                       </div>
@@ -350,42 +339,42 @@ export default function AllRequestsPage() {
     };
 
     return (
-      <div className="card p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+      <div className="gb-card" style={{ padding: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>
             {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </h3>
-          <div className="flex gap-2">
+          <div style={{ display: 'flex', gap: '8px' }}>
             <button
               onClick={prevMonth}
-              className="p-2 hover:bg-[var(--bg-secondary)] rounded-md transition-colors"
+              className="gb-icon-btn"
             >
               ←
             </button>
             <button
               onClick={nextMonth}
-              className="p-2 hover:bg-[var(--bg-secondary)] rounded-md transition-colors"
+              className="gb-icon-btn"
             >
               →
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-7 gap-2 mb-4">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', marginBottom: '16px' }}>
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} className="text-center font-semibold text-xs text-[var(--text-muted)] py-2">
+            <div key={day} style={{ textAlign: 'center', fontWeight: 600, fontSize: '12px', color: 'var(--text-muted)', padding: '8px 0' }}>
               {day}
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-2">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
           {days.map((day, idx) => {
             if (day === null) {
               return (
                 <div
                   key={`empty-${idx}`}
-                  className="min-h-20 bg-[var(--bg-secondary)] opacity-50 rounded-md"
+                  style={{ minHeight: '80px', backgroundColor: 'var(--bg-secondary)', opacity: 0.5, borderRadius: 'var(--radius-md)' }}
                 />
               );
             }
@@ -397,27 +386,39 @@ export default function AllRequestsPage() {
             return (
               <div
                 key={day}
-                className={`min-h-20 rounded-md border p-2 overflow-hidden ${
-                  isToday
-                    ? 'bg-[var(--accent-light)] border-[var(--accent)]'
-                    : 'bg-[var(--bg-card)] border-[var(--border)]'
-                }`}
+                style={{
+                  minHeight: '80px',
+                  borderRadius: 'var(--radius-md)',
+                  border: `1px solid ${isToday ? 'var(--accent)' : 'var(--border)'}`,
+                  padding: '8px',
+                  overflow: 'hidden',
+                  backgroundColor: isToday ? 'var(--accent-light)' : 'var(--bg-card)'
+                }}
               >
-                <div className="text-xs font-semibold text-[var(--text-primary)] mb-1">
+                <div style={{ fontSize: '12px', fontWeight: 600, color: isToday ? 'var(--accent-text)' : 'var(--text-muted)', marginBottom: '4px' }}>
                   {day}
                 </div>
-                <div className="space-y-1">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                   {requestsOnDay.slice(0, 3).map(req => (
                     <div
                       key={req.id}
-                      className={`text-xs px-1.5 py-0.5 rounded text-white truncate ${typeColors[req.type].dot.replace('bg-', 'bg-')}`}
+                      style={{
+                        fontSize: '11px',
+                        padding: '4px 6px',
+                        borderRadius: '4px',
+                        color: 'white',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        backgroundColor: typeColors[req.type].dot
+                      }}
                       title={req.title}
                     >
                       {req.type === 'Social Media Graphics' ? 'SMG' : req.type === 'Video' ? 'Video' : 'Gfx'}
                     </div>
                   ))}
                   {requestsOnDay.length > 3 && (
-                    <div className="text-xs text-[var(--text-muted)]">
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                       +{requestsOnDay.length - 3} more
                     </div>
                   )}
@@ -431,84 +432,81 @@ export default function AllRequestsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-[var(--text-primary)]">All Design Requests</h1>
-        <div className="text-sm text-[var(--text-muted)]">
-          {filteredRequests.length} of {SAMPLE_REQUESTS.length} requests
+    <div>
+      {/* Page Header */}
+      <div className="gb-page-header">
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '24px' }}>
+          <div style={{ flex: 1 }}>
+            <h1 className="gb-page-title">All Requests</h1>
+            <p className="gb-page-description">Browse, filter, and manage every design request across Graphics and Video workflows.</p>
+          </div>
+          <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
+            {filteredRequests.length} of {SAMPLE_REQUESTS.length} requests
+          </div>
         </div>
       </div>
 
-      {/* View Switcher and Filters */}
-      <div className="space-y-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-4">
-        {/* View Switcher */}
-        <div className="flex gap-2">
-          {[
-            { id: 'list' as const, icon: List, label: 'List View' },
-            { id: 'kanban' as const, icon: Columns3, label: 'Kanban View' },
-            { id: 'calendar' as const, icon: CalendarDays, label: 'Calendar View' }
-          ].map(view => {
-            const Icon = view.icon;
-            return (
-              <button
-                key={view.id}
-                onClick={() => setCurrentView(view.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${
-                  currentView === view.id
-                    ? 'bg-[var(--accent)] text-white'
-                    : 'bg-[var(--bg-secondary)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
-                }`}
-              >
-                <Icon size={18} />
-                {view.label}
-              </button>
-            );
-          })}
-        </div>
+      {/* View Switcher Tabs */}
+      <div className="gb-tabs" style={{ marginBottom: '24px' }}>
+        {[
+          { id: 'list' as const, icon: List, label: 'List' },
+          { id: 'kanban' as const, icon: Columns3, label: 'Kanban' },
+          { id: 'calendar' as const, icon: CalendarDays, label: 'Calendar' }
+        ].map(view => {
+          const Icon = view.icon;
+          return (
+            <div
+              key={view.id}
+              onClick={() => setCurrentView(view.id)}
+              className={`gb-tab ${currentView === view.id ? 'gb-tab-active' : ''}`}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              <Icon size={16} />
+              {view.label}
+            </div>
+          );
+        })}
+      </div>
 
+      {/* Filters Section */}
+      <div style={{ marginBottom: '24px' }}>
         {/* Search Bar */}
-        <div>
+        <div className="gb-search" style={{ marginBottom: '16px' }}>
+          <span style={{ display: 'flex', alignItems: 'center', color: 'var(--text-muted)' }}>🔍</span>
           <input
             type="text"
             placeholder="Search by title, ID, or requestor..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="input-base w-full"
           />
         </div>
 
         {/* Type Filters */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium text-[var(--text-secondary)]">Type:</span>
-          {['All', 'Video', 'Social Media Graphics', 'Graphics'].map(type => (
-            <button
-              key={type}
-              onClick={() => {
-                if (type === 'All') {
-                  setTypeFilters([]);
-                } else {
-                  toggleTypeFilter(type as RequestType);
-                }
-              }}
-              className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                type === 'All'
-                  ? typeFilters.length === 0
-                    ? 'bg-[var(--accent)] text-white'
-                    : 'bg-[var(--bg-secondary)] text-[var(--text-primary)]'
-                  : typeFilters.includes(type as RequestType)
-                  ? 'bg-[var(--accent)] text-white'
-                  : 'bg-[var(--bg-secondary)] text-[var(--text-primary)]'
-              }`}
-            >
-              {type}
-            </button>
-          ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Type:</span>
+          {['All', 'Video', 'Social Media Graphics', 'Graphics'].map(type => {
+            const isActive = type === 'All' ? typeFilters.length === 0 : typeFilters.includes(type as RequestType);
+            return (
+              <button
+                key={type}
+                onClick={() => {
+                  if (type === 'All') {
+                    setTypeFilters([]);
+                  } else {
+                    toggleTypeFilter(type as RequestType);
+                  }
+                }}
+                className={`gb-btn ${isActive ? 'gb-btn-primary' : 'gb-btn-secondary'}`}
+              >
+                {type}
+              </button>
+            );
+          })}
         </div>
 
         {/* Stage Filters */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium text-[var(--text-secondary)]">Stage:</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Stage:</span>
           {['All', 'Assigned', 'In Progress', 'Review', 'Completed', 'Change Req'].map(stage => {
             const isActive = stage === 'All' ? stageFilters.length === 0 : stageFilters.includes(stage);
             return (
@@ -521,11 +519,7 @@ export default function AllRequestsPage() {
                     toggleStageFilter(stage);
                   }
                 }}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-[var(--accent)] text-white'
-                    : 'bg-[var(--bg-secondary)] text-[var(--text-primary)]'
-                }`}
+                className={`gb-btn ${isActive ? 'gb-btn-primary' : 'gb-btn-secondary'}`}
               >
                 {stage}
               </button>
