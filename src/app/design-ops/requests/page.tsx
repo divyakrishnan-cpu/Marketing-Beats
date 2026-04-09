@@ -5,16 +5,18 @@ import { List, Columns3, CalendarDays, X } from 'lucide-react';
 import { Request, RequestType } from '@/types';
 import {
   SAMPLE_REQUESTS,
-  SAMPLE_USERS,
   getUserById,
   formatDate,
   getInitials,
   isOverdue,
   getDaysUntilDue,
-  isFinalStage,
-  getTotalTAT,
-  getStagesForType
 } from '@/lib/sample-data';
+import {
+  getDeliveryTAT,
+  calculateActiveTAT,
+  formatBusinessHours,
+  SLA_HOURS,
+} from '@/lib/tat';
 
 type ViewType = 'list' | 'kanban' | 'calendar';
 type SortField = 'need_by' | 'created_at' | null;
@@ -227,7 +229,23 @@ export default function AllRequestsPage() {
                     {isRowOverdue && <span style={{ marginLeft: '8px', fontWeight: 'bold', color: 'var(--error)' }}>OVERDUE</span>}
                   </td>
                   <td style={{ color: 'var(--text-secondary)' }}>
-                    {getTotalTAT(req)}h
+                    {(() => {
+                      const delivered = getDeliveryTAT(req.transitions ?? [], req.type);
+                      const active = delivered ?? calculateActiveTAT(req.transitions ?? []);
+                      const sla = SLA_HOURS[req.type];
+                      const ratio = active / sla;
+                      const color =
+                        ratio <= 0.8
+                          ? 'var(--success)'
+                          : ratio <= 1.0
+                          ? 'var(--warning)'
+                          : 'var(--error)';
+                      return (
+                        <span style={{ color, fontWeight: 500 }}>
+                          {formatBusinessHours(active)}
+                        </span>
+                      );
+                    })()}
                   </td>
                 </tr>
               );

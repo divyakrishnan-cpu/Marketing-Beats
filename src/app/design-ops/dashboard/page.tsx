@@ -6,11 +6,16 @@ import {
   SAMPLE_USERS,
   SAMPLE_REQUESTS,
   getStagesForType,
-  getStageTAT,
   isFinal,
   isOverdue,
 } from '@/lib/sample-data';
 import { Request, RequestType } from '@/types';
+import {
+  getDeliveryTAT,
+  getStageBreakdown,
+  formatBusinessHours,
+  SLA_HOURS,
+} from '@/lib/tat';
 import RequestModal from '@/components/design-ops/RequestModal';
 import DetailPanel from '@/components/design-ops/DetailPanel';
 
@@ -26,19 +31,19 @@ export default function DashboardPage() {
   const overdueRequests = requests.filter((r) => isOverdue(r)).length;
   const changeRequests = requests.filter((r) => r.current_stage === 'Change Req').length;
 
-  const avgTAT = Math.round(
-    requests.reduce((sum, r) => {
-      if (!r.stage_timestamps || !r.stage_timestamps['Assigned']) return sum;
-      const created = new Date(r.created_at);
-      const now = new Date();
-      const diffTime = Math.abs(now.getTime() - created.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return sum + diffDays;
-    }, 0) / Math.max(totalRequests, 1)
-  );
+  // Average delivery TAT in business hours, across all requests that reached
+  // the delivered stage (Ready to Upload).
+  const deliveredTATs = requests
+    .map((r) => getDeliveryTAT(r.transitions, r.type))
+    .filter((t): t is number => t !== null);
+  const avgTAT = deliveredTATs.length
+    ? Math.round((deliveredTATs.reduce((a, b) => a + b, 0) / deliveredTATs.length) * 10) / 10
+    : 0;
 
   const handleSaveRequest = (newRequest: Partial<Request>) => {
     const id = 'req-' + Math.random().toString(36).substr(2, 9);
+    const nowIso = new Date().toISOString();
+    const firstStage = newRequest.current_stage || 'Assigned';
     const fullRequest: Request = {
       id,
       type: newRequest.type || 'Graphics',
@@ -49,16 +54,26 @@ export default function DashboardPage() {
       requestor_id: newRequest.requestor_id,
       need_by: newRequest.need_by || '',
       reference_link: newRequest.reference_link,
-      current_stage: newRequest.current_stage || 'Assigned',
+      current_stage: firstStage,
       assigned_to: newRequest.assigned_to,
       social_poc: newRequest.social_poc,
       video_poc: newRequest.video_poc,
       upload_poc: newRequest.upload_poc,
       shoot_date: newRequest.shoot_date,
       revisions: newRequest.revisions || 0,
-      created_at: newRequest.created_at || new Date().toISOString().split('T')[0],
-      updated_at: newRequest.updated_at || new Date().toISOString().split('T')[0],
-      stage_timestamps: newRequest.stage_timestamps || {},
+      created_at: newRequest.created_at || nowIso,
+      updated_at: newRequest.updated_at || nowIso,
+      transitions: newRequest.transitions ?? [
+        {
+          id: `tr-${id}-0`,
+          request_id: id,
+          from_stage: null,
+          to_stage: firstStage,
+          transitioned_at: nowIso,
+          transitioned_by: newRequest.requestor_id || 'user-divya-krishnan',
+        },
+      ],
+      stage_timestamps: newRequest.stage_timestamps || { [firstStage]: nowIso },
     };
     setRequests([...requests, fullRequest]);
     setIsModalOpen(false);
@@ -75,28 +90,36 @@ export default function DashboardPage() {
     setIsPanelOpen(true);
   };
 
+  // Per-stage average business hours across all requests, grouped by type.
   const calculateStageAverages = () => {
-    const tatData: Array<{ stage: string; type: RequestType; avgDays: number }> = [];
+    const tatData: Array<{ stage: string; type: RequestType; avgHours: number }> = [];
     const types: RequestType[] = ['Graphics', 'Social Media Graphics', 'Video'];
 
     types.forEach((type) => {
       const typeRequests = requests.filter((r) => r.type === type);
-      const stages = getStagesForType(type);
+      if (typeRequests.length === 0) return;
 
-      stages.forEach((stage) => {
-        const daysArray = typeRequests
-          .filter((r) => r.stage_timestamps && r.stage_timestamps[stages[0]] && r.stage_timestamps[stage])
-          .map((r) => getStageTAT(r, stages[0], stage));
+      const stageTotals = new Map<string, number>();
+      const stageCounts = new Map<string, number>();
 
-        if (daysArray.length > 0) {
-          const avgDays = Math.round(daysArray.reduce((a, b) => a + b, 0) / daysArray.length);
-          tatData.push({
-            stage: `${type.split(' ')[0]}: ${stage}`,
-            type,
-            avgDays,
-          });
+      for (const req of typeRequests) {
+        const breakdown = getStageBreakdown(req.transitions);
+        for (const { stage, hours } of breakdown) {
+          stageTotals.set(stage, (stageTotals.get(stage) ?? 0) + hours);
+          stageCounts.set(stage, (stageCounts.get(stage) ?? 0) + 1);
         }
-      });
+      }
+
+      for (const stage of getStagesForType(type)) {
+        const total = stageTotals.get(stage) ?? 0;
+        const count = stageCounts.get(stage) ?? 0;
+        if (count === 0) continue;
+        tatData.push({
+          stage: `${type.split(' ')[0]}: ${stage}`,
+          type,
+          avgHours: Math.round((total / count) * 10) / 10,
+        });
+      }
     });
 
     return tatData;
@@ -118,7 +141,7 @@ export default function DashboardPage() {
     { label: 'Completed', value: completedRequests, icon: CheckCircle2, accent: 'var(--success)' },
     { label: 'Active', value: activeRequests, icon: Clock, accent: 'var(--warning)' },
     { label: 'Overdue', value: overdueRequests, icon: AlertCircle, accent: 'var(--error)' },
-    { label: 'Avg TAT (days)', value: avgTAT, icon: TrendingUp, accent: 'var(--accent)' },
+    { label: 'Avg TAT (biz hrs)', value: avgTAT, icon: TrendingUp, accent: 'var(--accent)' },
     { label: 'Change Req', value: changeRequests, icon: RefreshCw, accent: '#9333ea' },
   ];
 
@@ -180,15 +203,17 @@ export default function DashboardPage() {
                 </tr>
               ) : (
                 stageAverages.map((item, idx) => {
+                  const sla = SLA_HOURS[item.type];
+                  const ratio = item.avgHours / sla;
                   let badgeClass = 'gb-badge gb-badge-green';
-                  if (item.avgDays >= 3 && item.avgDays <= 5) badgeClass = 'gb-badge gb-badge-yellow';
-                  else if (item.avgDays > 5) badgeClass = 'gb-badge gb-badge-red';
+                  if (ratio > 0.3 && ratio <= 0.6) badgeClass = 'gb-badge gb-badge-yellow';
+                  else if (ratio > 0.6) badgeClass = 'gb-badge gb-badge-red';
 
                   return (
                     <tr key={idx}>
                       <td style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{item.stage}</td>
                       <td style={{ textAlign: 'right' }}>
-                        <span className={badgeClass}>{item.avgDays}d</span>
+                        <span className={badgeClass}>{formatBusinessHours(item.avgHours)}</span>
                       </td>
                     </tr>
                   );

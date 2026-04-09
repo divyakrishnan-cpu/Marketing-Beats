@@ -15,6 +15,9 @@ const breadcrumbMap: Record<string, { section: string; sectionHref: string; labe
   '/design-ops/social-calendar': { section: 'Design Ops', sectionHref: '/design-ops/dashboard', label: 'Social Calendar' },
   '/design-ops/requests': { section: 'Design Ops', sectionHref: '/design-ops/dashboard', label: 'All Requests' },
   '/design-ops/downloads': { section: 'Design Ops', sectionHref: '/design-ops/dashboard', label: 'Downloads / Uploads' },
+  '/performance/my': { section: 'Performance', sectionHref: '/performance/my', label: 'My Performance' },
+  '/performance/team': { section: 'Performance', sectionHref: '/performance/team', label: 'Team Performance' },
+  '/performance/change-requests': { section: 'Performance', sectionHref: '/performance/team', label: 'Change Requests' },
   '/user-management': { section: 'Admin', sectionHref: '/user-management', label: 'User Management' },
 };
 

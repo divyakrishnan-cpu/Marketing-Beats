@@ -50,20 +50,30 @@ export interface Request {
   upload_poc?: string;
   shoot_date?: string; // DATE format: YYYY-MM-DD
   revisions: number;
+  /** ISO timestamp when the request was raised. */
   created_at: string;
+  /** ISO timestamp when the request was last touched. */
   updated_at: string;
-  stage_timestamps?: Record<string, string>; // Timestamp records for each stage
+  /** Append-only log of stage transitions. Primary source of truth for TAT. */
+  transitions: StageTransition[];
+  /** @deprecated Kept only for backwards-compat with older pages. Use `transitions`. */
+  stage_timestamps?: Record<string, string>;
 }
 
 /**
- * Stage transition entity
+ * Append-only record of a stage transition.
+ * `from_stage` is null only for the very first entry (creation).
  */
 export interface StageTransition {
   id: string;
   request_id: string;
-  stage: RequestStage;
+  from_stage: RequestStage | null;
+  to_stage: RequestStage;
+  /** ISO 8601 with offset, e.g. "2026-03-14T11:45:00+05:30" */
   transitioned_at: string;
-  transitioned_by?: string;
+  /** User who triggered the transition. */
+  transitioned_by: string;
+  note?: string;
 }
 
 /**

@@ -10,6 +10,9 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  Gauge,
+  UserCircle,
+  RefreshCw,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -43,12 +46,31 @@ const navSections: NavSection[] = [
         label: 'All Requests',
         href: '/design-ops/requests',
         icon: <ClipboardList size={16} strokeWidth={1.75} />,
-        badge: 5,
       },
       {
         label: 'Downloads / Uploads',
         href: '/design-ops/downloads',
         icon: <FolderDown size={16} strokeWidth={1.75} />,
+      },
+    ],
+  },
+  {
+    title: 'Performance',
+    items: [
+      {
+        label: 'My Performance',
+        href: '/performance/my',
+        icon: <UserCircle size={16} strokeWidth={1.75} />,
+      },
+      {
+        label: 'Team Performance',
+        href: '/performance/team',
+        icon: <Gauge size={16} strokeWidth={1.75} />,
+      },
+      {
+        label: 'Change Requests',
+        href: '/performance/change-requests',
+        icon: <RefreshCw size={16} strokeWidth={1.75} />,
       },
     ],
   },

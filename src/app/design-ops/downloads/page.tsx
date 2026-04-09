@@ -87,6 +87,7 @@ export default function DownloadsUploadsPage() {
   const handleImport = () => {
     const newRequests = previewData.map((row, index) => {
       const id = `req-${Date.now()}-${index}`;
+      const nowIso = new Date().toISOString();
       return {
         id,
         type: (row.Type as any) || 'Graphics',
@@ -98,8 +99,18 @@ export default function DownloadsUploadsPage() {
         reference_link: row['Reference Link'] || '',
         current_stage: 'Assigned',
         revisions: 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
+        created_at: nowIso,
+        updated_at: nowIso,
+        transitions: [
+          {
+            id: `tr-${id}-0`,
+            request_id: id,
+            from_stage: null,
+            to_stage: 'Assigned' as const,
+            transitioned_at: nowIso,
+            transitioned_by: 'user-divya-krishnan',
+          },
+        ],
       } as Request;
     });
 

@@ -1,11 +1,12 @@
 'use client';
 
 import { X, CheckCircle, Circle, ChevronRight } from 'lucide-react';
-import { Request, User, getTATCategoriesForType } from '@/types';
-import { getStagesForType, getStageTAT, isOverdue } from '@/lib/sample-data';
+import { Request, User, StageTransition, getTATCategoriesForType } from '@/types';
+import { getStagesForType, isOverdue } from '@/lib/sample-data';
+import { getStageBreakdown, formatBusinessHours } from '@/lib/tat';
 
 interface DetailPanelProps {
-  request: Request & { stage_timestamps?: Record<string, string> };
+  request: Request;
   users: User[];
   isOpen: boolean;
   onClose: () => void;
@@ -22,37 +23,37 @@ export default function DetailPanel({ request, users, isOpen, onClose, onUpdate 
   const nextStage = currentStageIndex < stages.length - 1 ? stages[currentStageIndex + 1] : null;
   const isFinal = request.current_stage === 'Done' || request.current_stage === 'Uploaded';
 
+  const appendTransition = (toStage: Request['current_stage']): Request => {
+    const nowIso = new Date().toISOString();
+    const existing = request.transitions ?? [];
+    const fromStage = existing.length
+      ? existing[existing.length - 1].to_stage
+      : request.current_stage;
+    const transition: StageTransition = {
+      id: `tr-${request.id}-${Date.now()}`,
+      request_id: request.id,
+      from_stage: fromStage,
+      to_stage: toStage,
+      transitioned_at: nowIso,
+      transitioned_by: request.assigned_to ?? 'user-divya-krishnan',
+    };
+    return {
+      ...request,
+      current_stage: toStage,
+      updated_at: nowIso,
+      transitions: [...existing, transition],
+    };
+  };
+
   const handleAdvanceStage = () => {
     if (nextStage) {
-      const today = new Date().toISOString().split('T')[0];
-      const timestamps = request.stage_timestamps || {};
-      const updated: Request = {
-        ...request,
-        current_stage: nextStage as any,
-        updated_at: today,
-        stage_timestamps: {
-          ...timestamps,
-          [nextStage]: today,
-        },
-      };
-      onUpdate(updated);
+      onUpdate(appendTransition(nextStage as Request['current_stage']));
     }
   };
 
   const handleMarkComplete = () => {
     const finalStage = stages[stages.length - 1];
-    const today = new Date().toISOString().split('T')[0];
-    const timestamps = request.stage_timestamps || {};
-    const updated: Request = {
-      ...request,
-      current_stage: finalStage as any,
-      updated_at: today,
-      stage_timestamps: {
-        ...timestamps,
-        [finalStage]: today,
-      },
-    };
-    onUpdate(updated);
+    onUpdate(appendTransition(finalStage as Request['current_stage']));
   };
 
   const handlePOCChange = (pocType: string, userId: string) => {
@@ -149,21 +150,26 @@ export default function DetailPanel({ request, users, isOpen, onClose, onUpdate 
             </button>
           )}
 
-          {/* Stage-wise TAT Breakdown */}
+          {/* Stage-wise TAT Breakdown (business hours) */}
           <div>
-            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">TAT Breakdown</h3>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">
+              TAT Breakdown
+              <span className="ml-2 text-[10px] font-normal text-[var(--text-faint)] uppercase tracking-wider">
+                business hours
+              </span>
+            </h3>
             <div className="grid grid-cols-2 gap-2">
               {tatCategories.map((cat) => {
-                const tat = request.stage_timestamps
-                  ? getStageTAT(request, stages[0], cat.stage)
-                  : 0;
+                const breakdown = getStageBreakdown(request.transitions ?? []);
+                const row = breakdown.find((b) => b.stage === cat.stage);
+                const hours = row?.hours ?? 0;
                 return (
                   <div
                     key={cat.stage}
                     className="p-2 rounded-md bg-[var(--bg-tertiary)] text-xs"
                   >
                     <div className="font-medium text-[var(--text-primary)]">
-                      {tat}d
+                      {hours > 0 ? formatBusinessHours(hours) : '—'}
                     </div>
                     <div className="text-[var(--text-muted)] truncate">
                       {cat.description}

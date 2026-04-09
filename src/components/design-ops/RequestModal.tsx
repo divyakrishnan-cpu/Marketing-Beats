@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { Request, RequestType, REQUESTED_BY_OPTIONS, REQUEST_TYPES } from '@/types';
+import { Request, RequestType, REQUESTED_BY_OPTIONS, REQUEST_TYPES, StageTransition } from '@/types';
 import { getStagesForType } from '@/lib/sample-data';
 
 interface RequestModalProps {
@@ -61,7 +61,18 @@ export default function RequestModal({ isOpen, onClose, onSave }: RequestModalPr
     }
 
     const stages = getStagesForType(formData.type);
-    const today = new Date().toISOString().split('T')[0];
+    const nowIso = new Date().toISOString();
+    const tempId = `req-new-${Date.now()}`;
+    const firstStage = stages[0];
+
+    const initialTransition: StageTransition = {
+      id: `tr-${tempId}-0`,
+      request_id: tempId,
+      from_stage: null,
+      to_stage: firstStage,
+      transitioned_at: nowIso,
+      transitioned_by: 'user-divya-krishnan',
+    };
 
     const newRequest: Partial<Request> = {
       type: formData.type,
@@ -72,13 +83,11 @@ export default function RequestModal({ isOpen, onClose, onSave }: RequestModalPr
       requestor_id: 'user-divya-krishnan',
       need_by: formData.needBy,
       reference_link: formData.referenceLink || undefined,
-      current_stage: stages[0] as any,
+      current_stage: firstStage,
       revisions: 0,
-      created_at: today,
-      updated_at: today,
-      stage_timestamps: {
-        [stages[0]]: today,
-      },
+      created_at: nowIso,
+      updated_at: nowIso,
+      transitions: [initialTransition],
     };
 
     onSave(newRequest);
