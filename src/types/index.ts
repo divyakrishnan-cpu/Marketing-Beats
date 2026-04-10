@@ -96,6 +96,69 @@ export interface SocialCalendarEntry {
 }
 
 /**
+ * Social metrics tracking
+ *
+ * Captures month-end snapshot metrics from each social platform.
+ * One row = one platform × one month. Sourced from CSV/XLSX exports
+ * pulled by the social team from the native analytics dashboards.
+ */
+export type SocialMetricPlatform = 'YouTube' | 'LinkedIn' | 'Instagram' | 'Facebook';
+
+export interface SocialMetricRow {
+  id: string;
+  platform: SocialMetricPlatform;
+  /** First day of the reporting month, e.g. "2026-03-01" */
+  month: string;
+  /** Total followers / subscribers at end of period. */
+  followers: number;
+  /** New followers gained during the period. */
+  followers_gained?: number;
+  /** Total impressions across all posts during the period. */
+  impressions: number;
+  /** Total reach (unique accounts) across all posts during the period. */
+  reach?: number;
+  /** Sum of likes / reactions across posts during the period. */
+  likes: number;
+  /** Sum of comments across posts during the period. */
+  comments: number;
+  /** Sum of shares / retweets / reposts across posts during the period. */
+  shares: number;
+  /** Sum of saves / bookmarks (Instagram, LinkedIn). */
+  saves?: number;
+  /** Profile / channel views during the period. */
+  profile_views?: number;
+  /** Outbound clicks / link clicks. */
+  link_clicks?: number;
+  /** Number of posts published. */
+  posts: number;
+  /** Average engagement rate (%) — likes+comments+shares ÷ reach × 100. */
+  engagement_rate?: number;
+  /** Optional notes added at upload time. */
+  note?: string;
+  /** Who uploaded this row, ISO timestamp. */
+  uploaded_by: string;
+  uploaded_at: string;
+  /** Source filename, useful for audit. */
+  source_file?: string;
+}
+
+/** Monthly target for a single platform — used to overlay goals on the dashboard. */
+export interface SocialMetricTarget {
+  platform: SocialMetricPlatform;
+  followers: number;
+  impressions: number;
+  engagement_rate: number;
+  posts: number;
+}
+
+export const SOCIAL_METRIC_PLATFORMS: SocialMetricPlatform[] = [
+  'YouTube',
+  'LinkedIn',
+  'Instagram',
+  'Facebook',
+];
+
+/**
  * Workflow constants and TAT categories
  */
 export const REQUEST_TYPES: RequestType[] = [

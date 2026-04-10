@@ -267,8 +267,9 @@ export default function ChangeRequestsPage() {
                             <div
                               className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold flex-shrink-0"
                               style={{
-                                background: 'linear-gradient(135deg, #346ddb 0%, #6b9aff 100%)',
-                                color: '#fff',
+                                backgroundColor: 'var(--accent-light)',
+                                color: 'var(--accent-text)',
+                                border: '1px solid var(--border)',
                               }}
                             >
                               {getInitials(r.user?.name ?? '?')}
@@ -533,9 +534,9 @@ export default function ChangeRequestsPage() {
                             <div
                               className="w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-semibold flex-shrink-0"
                               style={{
-                                background:
-                                  'linear-gradient(135deg, #346ddb 0%, #6b9aff 100%)',
-                                color: '#fff',
+                                backgroundColor: 'var(--accent-light)',
+                                color: 'var(--accent-text)',
+                                border: '1px solid var(--border)',
                               }}
                             >
                               {getInitials(e.makerName)}

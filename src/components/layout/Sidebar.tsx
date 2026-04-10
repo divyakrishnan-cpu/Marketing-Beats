@@ -13,6 +13,9 @@ import {
   Gauge,
   UserCircle,
   RefreshCw,
+  BarChart3,
+  Upload,
+  BookOpen,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -38,11 +41,6 @@ const navSections: NavSection[] = [
         icon: <LayoutDashboard size={16} strokeWidth={1.75} />,
       },
       {
-        label: 'Social Calendar',
-        href: '/design-ops/social-calendar',
-        icon: <Calendar size={16} strokeWidth={1.75} />,
-      },
-      {
         label: 'All Requests',
         href: '/design-ops/requests',
         icon: <ClipboardList size={16} strokeWidth={1.75} />,
@@ -51,6 +49,31 @@ const navSections: NavSection[] = [
         label: 'Downloads / Uploads',
         href: '/design-ops/downloads',
         icon: <FolderDown size={16} strokeWidth={1.75} />,
+      },
+    ],
+  },
+  {
+    title: 'Social',
+    items: [
+      {
+        label: 'Dashboard',
+        href: '/social/dashboard',
+        icon: <BarChart3 size={16} strokeWidth={1.75} />,
+      },
+      {
+        label: 'Upload',
+        href: '/social/upload',
+        icon: <Upload size={16} strokeWidth={1.75} />,
+      },
+      {
+        label: 'Calendar',
+        href: '/social/calendar',
+        icon: <Calendar size={16} strokeWidth={1.75} />,
+      },
+      {
+        label: 'How to fetch',
+        href: '/social/how-to-fetch',
+        icon: <BookOpen size={16} strokeWidth={1.75} />,
       },
     ],
   },
@@ -105,8 +128,12 @@ export default function Sidebar() {
       <div className="px-4 pt-5 pb-4">
         <Link href="/design-ops/dashboard" className="flex items-center gap-2.5 group">
           <div
-            className="w-7 h-7 rounded-md flex items-center justify-center text-white font-semibold text-[13px] flex-shrink-0"
-            style={{ background: 'linear-gradient(135deg, #346ddb 0%, #6b9aff 100%)' }}
+            className="w-7 h-7 rounded-md flex items-center justify-center font-semibold text-[13px] flex-shrink-0"
+            style={{
+              backgroundColor: 'var(--accent-light)',
+              color: 'var(--accent-text)',
+              border: '1px solid var(--border)',
+            }}
           >
             M
           </div>
@@ -190,8 +217,9 @@ export default function Sidebar() {
           <div
             className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0"
             style={{
-              background: 'linear-gradient(135deg, #346ddb 0%, #6b9aff 100%)',
-              color: '#fff',
+              backgroundColor: 'var(--accent-light)',
+              color: 'var(--accent-text)',
+              border: '1px solid var(--border)',
             }}
           >
             DK

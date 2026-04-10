@@ -12,9 +12,12 @@ interface TopbarProps {
 
 const breadcrumbMap: Record<string, { section: string; sectionHref: string; label: string }> = {
   '/design-ops/dashboard': { section: 'Design Ops', sectionHref: '/design-ops/dashboard', label: 'Dashboard' },
-  '/design-ops/social-calendar': { section: 'Design Ops', sectionHref: '/design-ops/dashboard', label: 'Social Calendar' },
   '/design-ops/requests': { section: 'Design Ops', sectionHref: '/design-ops/dashboard', label: 'All Requests' },
   '/design-ops/downloads': { section: 'Design Ops', sectionHref: '/design-ops/dashboard', label: 'Downloads / Uploads' },
+  '/social/dashboard': { section: 'Social', sectionHref: '/social/dashboard', label: 'Dashboard' },
+  '/social/upload': { section: 'Social', sectionHref: '/social/dashboard', label: 'Upload Metrics' },
+  '/social/calendar': { section: 'Social', sectionHref: '/social/dashboard', label: 'Calendar' },
+  '/social/how-to-fetch': { section: 'Social', sectionHref: '/social/dashboard', label: 'How to fetch' },
   '/performance/my': { section: 'Performance', sectionHref: '/performance/my', label: 'My Performance' },
   '/performance/team': { section: 'Performance', sectionHref: '/performance/team', label: 'Team Performance' },
   '/performance/change-requests': { section: 'Performance', sectionHref: '/performance/team', label: 'Change Requests' },

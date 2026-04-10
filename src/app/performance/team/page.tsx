@@ -230,8 +230,9 @@ export default function TeamPerformancePage() {
                       <div
                         className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0"
                         style={{
-                          background: 'linear-gradient(135deg, #dc2626 0%, #f87171 100%)',
-                          color: '#fff',
+                          backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                          color: '#b91c1c',
+                          border: '1px solid rgba(220, 38, 38, 0.2)',
                         }}
                       >
                         {getInitials(r.user?.name ?? '?')}
@@ -306,8 +307,9 @@ export default function TeamPerformancePage() {
                       <div
                         className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0"
                         style={{
-                          background: 'linear-gradient(135deg, #16a34a 0%, #4ade80 100%)',
-                          color: '#fff',
+                          backgroundColor: 'rgba(22, 163, 74, 0.1)',
+                          color: '#15803d',
+                          border: '1px solid rgba(22, 163, 74, 0.2)',
                         }}
                       >
                         {getInitials(r.user?.name ?? '?')}
@@ -436,9 +438,9 @@ export default function TeamPerformancePage() {
                           <div
                             className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold flex-shrink-0"
                             style={{
-                              background:
-                                'linear-gradient(135deg, #346ddb 0%, #6b9aff 100%)',
-                              color: '#fff',
+                              backgroundColor: 'var(--accent-light)',
+                              color: 'var(--accent-text)',
+                              border: '1px solid var(--border)',
                             }}
                           >
                             {getInitials(row.user?.name ?? '?')}

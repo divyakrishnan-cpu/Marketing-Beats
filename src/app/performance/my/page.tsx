@@ -186,8 +186,7 @@ function MyPerformancePageInner() {
         className="gb-card mb-6"
         style={{
           padding: 24,
-          borderLeft: `4px solid ${statusColor.ring}`,
-          background: `linear-gradient(90deg, ${statusColor.bg}, transparent 60%)`,
+          borderLeft: `3px solid ${statusColor.ring}`,
         }}
       >
         <div className="flex items-center justify-between flex-wrap gap-4">

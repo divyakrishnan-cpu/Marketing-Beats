@@ -137,12 +137,12 @@ export default function DashboardPage() {
     .slice(0, 5);
 
   const stats = [
-    { label: 'Total Requests', value: totalRequests, icon: Activity, accent: 'var(--accent)' },
-    { label: 'Completed', value: completedRequests, icon: CheckCircle2, accent: 'var(--success)' },
-    { label: 'Active', value: activeRequests, icon: Clock, accent: 'var(--warning)' },
-    { label: 'Overdue', value: overdueRequests, icon: AlertCircle, accent: 'var(--error)' },
-    { label: 'Avg TAT (biz hrs)', value: avgTAT, icon: TrendingUp, accent: 'var(--accent)' },
-    { label: 'Change Req', value: changeRequests, icon: RefreshCw, accent: '#9333ea' },
+    { label: 'Total Requests', value: totalRequests, icon: Activity },
+    { label: 'Completed', value: completedRequests, icon: CheckCircle2 },
+    { label: 'Active', value: activeRequests, icon: Clock },
+    { label: 'Overdue', value: overdueRequests, icon: AlertCircle },
+    { label: 'Avg TAT (biz hrs)', value: avgTAT, icon: TrendingUp },
+    { label: 'Change Req', value: changeRequests, icon: RefreshCw },
   ];
 
   return (
@@ -163,15 +163,13 @@ export default function DashboardPage() {
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
-        {stats.map(({ label, value, icon: Icon, accent }) => (
+        {stats.map(({ label, value, icon: Icon }) => (
           <div key={label} className="gb-stat-card">
             <div className="flex items-start justify-between mb-1">
               <div className="gb-stat-label">{label}</div>
-              <Icon size={14} strokeWidth={1.75} style={{ color: accent }} />
+              <Icon size={14} strokeWidth={1.75} style={{ color: 'var(--text-faint)' }} />
             </div>
-            <div className="gb-stat-value" style={{ color: accent }}>
-              {value}
-            </div>
+            <div className="gb-stat-value">{value}</div>
           </div>
         ))}
       </div>

@@ -58,8 +58,12 @@ export default function LoginPage() {
           {/* Brand */}
           <div className="text-center mb-8">
             <div
-              className="w-11 h-11 mx-auto mb-4 rounded-lg flex items-center justify-center text-white font-semibold text-[18px]"
-              style={{ background: 'linear-gradient(135deg, #346ddb 0%, #6b9aff 100%)' }}
+              className="w-11 h-11 mx-auto mb-4 rounded-lg flex items-center justify-center font-semibold text-[18px]"
+              style={{
+                backgroundColor: 'var(--accent-light)',
+                color: 'var(--accent-text)',
+                border: '1px solid var(--border)',
+              }}
             >
               M
             </div>
