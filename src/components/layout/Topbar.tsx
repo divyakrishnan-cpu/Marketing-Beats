@@ -22,6 +22,7 @@ const breadcrumbMap: Record<string, { section: string; sectionHref: string; labe
   '/performance/team': { section: 'Performance', sectionHref: '/performance/team', label: 'Team Performance' },
   '/performance/change-requests': { section: 'Performance', sectionHref: '/performance/team', label: 'Change Requests' },
   '/user-management': { section: 'Admin', sectionHref: '/user-management', label: 'User Management' },
+  '/admin/reset-passwords': { section: 'Admin', sectionHref: '/user-management', label: 'Reset Passwords' },
 };
 
 export default function Topbar({ title, onNewRequest }: TopbarProps) {

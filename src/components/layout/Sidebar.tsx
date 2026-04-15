@@ -16,6 +16,7 @@ import {
   BarChart3,
   Upload,
   BookOpen,
+  Key,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -108,6 +109,11 @@ const navSections: NavSection[] = [
         href: '/user-management',
         icon: <Users size={16} strokeWidth={1.75} />,
       },
+      {
+        label: 'Reset Passwords',
+        href: '/admin/reset-passwords',
+        icon: <Key size={16} strokeWidth={1.75} />,
+      },
     ],
   },
 ];
@@ -117,6 +123,7 @@ export default function Sidebar() {
   const router = useRouter();
   const { role, toggleRole } = useRole();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showChangePwd, setShowChangePwd] = useState(false);
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + '/');
@@ -229,6 +236,15 @@ export default function Sidebar() {
             }}
           >
             <button
+              onClick={() => { setShowUserMenu(false); setShowChangePwd(true); }}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-[13px] transition-colors hover:bg-[var(--bg-hover)]"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              <Settings size={14} strokeWidth={1.75} />
+              Change password
+            </button>
+            <div style={{ height: 1, backgroundColor: 'var(--border)' }} />
+            <button
               onClick={handleSignOut}
               className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-[13px] transition-colors hover:bg-[var(--bg-hover)]"
               style={{ color: 'var(--error)' }}
@@ -238,6 +254,9 @@ export default function Sidebar() {
             </button>
           </div>
         )}
+
+        {/* Change password modal */}
+        {showChangePwd && <ChangePasswordModal onClose={() => setShowChangePwd(false)} />}
 
         <div
           className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-[var(--bg-hover)] cursor-pointer transition-colors"
@@ -267,5 +286,55 @@ export default function Sidebar() {
         </div>
       </div>
     </aside>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
+function ChangePasswordModal({ onClose }: { onClose: () => void }) {
+  const [newPwd, setNewPwd] = useState('');
+  const [confirmPwd, setConfirmPwd] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSave = async () => {
+    if (newPwd.length < 8) { setError('Password must be at least 8 characters.'); return; }
+    if (newPwd !== confirmPwd) { setError('Passwords do not match.'); return; }
+    setError('');
+    setLoading(true);
+    const { error: err } = await supabase.auth.updateUser({ password: newPwd });
+    setLoading(false);
+    if (err) { setError(err.message); } else { setSuccess(true); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(15,17,23,0.5)' }} onClick={onClose}>
+      <div className="gb-card w-full max-w-sm p-5" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-[15px] font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Change password</h3>
+        {success ? (
+          <div>
+            <div className="text-[13px] mb-4" style={{ color: 'var(--success)' }}>Password updated successfully.</div>
+            <button onClick={onClose} className="gb-btn gb-btn-primary w-full">Done</button>
+          </div>
+        ) : (
+          <>
+            {error && <div className="mb-3 p-2 rounded text-[12px]" style={{ backgroundColor: 'var(--error-bg)', color: 'var(--error)' }}>{error}</div>}
+            <div className="mb-3">
+              <label className="block text-[11px] font-medium mb-1" style={{ color: 'var(--text-faint)' }}>New password</label>
+              <input type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} placeholder="Min 8 characters" className="gb-input w-full" />
+            </div>
+            <div className="mb-4">
+              <label className="block text-[11px] font-medium mb-1" style={{ color: 'var(--text-faint)' }}>Confirm password</label>
+              <input type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} placeholder="Re-enter password" className="gb-input w-full" />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={onClose} className="gb-btn gb-btn-secondary flex-1">Cancel</button>
+              <button onClick={handleSave} disabled={loading} className="gb-btn gb-btn-primary flex-1">{loading ? 'Saving…' : 'Update'}</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
