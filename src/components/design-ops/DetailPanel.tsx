@@ -1,6 +1,7 @@
 'use client';
 
-import { X, CheckCircle, Circle, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
+import { X, CheckCircle, Circle, ChevronRight, ExternalLink, Link2 } from 'lucide-react';
 import { Request, User, StageTransition, getTATCategoriesForType } from '@/types';
 import { getStagesForType, isOverdue } from '@/lib/sample-data';
 import { getStageBreakdown, formatBusinessHours } from '@/lib/tat';
@@ -14,6 +15,13 @@ interface DetailPanelProps {
 }
 
 export default function DetailPanel({ request, users, isOpen, onClose, onUpdate }: DetailPanelProps) {
+  const [uploadLinks, setUploadLinks] = useState({
+    youtube_link: request.youtube_link || '',
+    instagram_link: request.instagram_link || '',
+    linkedin_link: request.linkedin_link || '',
+    pinterest_link: request.pinterest_link || '',
+  });
+
   if (!isOpen) {
     return null;
   }
@@ -22,6 +30,7 @@ export default function DetailPanel({ request, users, isOpen, onClose, onUpdate 
   const currentStageIndex = stages.indexOf(request.current_stage as any);
   const nextStage = currentStageIndex < stages.length - 1 ? stages[currentStageIndex + 1] : null;
   const isFinal = request.current_stage === 'Done' || request.current_stage === 'Uploaded';
+  const isReadyToUpload = request.current_stage === 'Ready to Upload';
 
   const appendTransition = (toStage: Request['current_stage']): Request => {
     const nowIso = new Date().toISOString();
@@ -45,6 +54,12 @@ export default function DetailPanel({ request, users, isOpen, onClose, onUpdate 
     };
   };
 
+  const handleStageChange = (newStage: string) => {
+    if (newStage !== request.current_stage) {
+      onUpdate(appendTransition(newStage as Request['current_stage']));
+    }
+  };
+
   const handleAdvanceStage = () => {
     if (nextStage) {
       onUpdate(appendTransition(nextStage as Request['current_stage']));
@@ -56,11 +71,23 @@ export default function DetailPanel({ request, users, isOpen, onClose, onUpdate 
     onUpdate(appendTransition(finalStage as Request['current_stage']));
   };
 
-  const handlePOCChange = (pocType: string, userId: string) => {
+  const handleFieldChange = (field: string, value: string) => {
     const updated: Request = {
       ...request,
-      [pocType]: userId || undefined,
-      updated_at: new Date().toISOString().split('T')[0],
+      [field]: value || undefined,
+      updated_at: new Date().toISOString(),
+    };
+    onUpdate(updated);
+  };
+
+  const handleUploadLinkSave = () => {
+    const updated: Request = {
+      ...request,
+      youtube_link: uploadLinks.youtube_link || undefined,
+      instagram_link: uploadLinks.instagram_link || undefined,
+      linkedin_link: uploadLinks.linkedin_link || undefined,
+      pinterest_link: uploadLinks.pinterest_link || undefined,
+      updated_at: new Date().toISOString(),
     };
     onUpdate(updated);
   };
@@ -68,71 +95,84 @@ export default function DetailPanel({ request, users, isOpen, onClose, onUpdate 
   const assignedUser = users.find((u) => u.id === request.assigned_to);
   const tatCategories = getTATCategoriesForType(request.type);
 
+  const linkFields = [
+    { key: 'youtube_link', label: 'YouTube', placeholder: 'https://youtube.com/watch?v=...' },
+    { key: 'instagram_link', label: 'Instagram', placeholder: 'https://instagram.com/p/...' },
+    { key: 'linkedin_link', label: 'LinkedIn', placeholder: 'https://linkedin.com/posts/...' },
+    { key: 'pinterest_link', label: 'Pinterest', placeholder: 'https://pinterest.com/pin/...' },
+  ];
+
   return (
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-40"
+        className="fixed inset-0 z-40"
+        style={{ backgroundColor: 'rgba(15, 17, 23, 0.35)' }}
         onClick={onClose}
       />
 
       {/* Panel */}
       <div className="fixed right-0 top-0 h-screen w-[540px] bg-[var(--bg-card)] border-l border-[var(--border)] shadow-2xl z-50 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
-          <div className="flex items-center gap-3 flex-1">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold badge badge-blue">
+        <div className="flex items-center justify-between p-5 border-b border-[var(--border)] bg-[var(--bg-secondary)]">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <span className="gb-badge gb-badge-blue flex-shrink-0">
               {request.type}
             </span>
-            <h2 className="text-lg font-semibold text-[var(--text-primary)] truncate">
+            <h2 className="text-[15px] font-semibold text-[var(--text-primary)] truncate">
               {request.title}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-[var(--bg-tertiary)] rounded-md transition-colors flex-shrink-0"
+            className="gb-icon-btn flex-shrink-0 ml-2"
             title="Close"
           >
-            <X size={20} className="text-[var(--text-secondary)]" />
+            <X size={16} />
           </button>
         </div>
 
         {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-5 space-y-5">
           {/* Workflow Stepper */}
           <div>
-            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Workflow</h3>
-            <div className="flex items-center gap-2 overflow-x-auto pb-2">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-faint)' }}>
+              Workflow
+            </h3>
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-2">
               {stages.map((stage, idx) => {
                 const isActive = stage === request.current_stage;
                 const isDone = idx < currentStageIndex;
 
                 return (
                   <div key={stage} className="flex items-center gap-1 flex-shrink-0">
-                    <div className="flex flex-col items-center">
+                    <button
+                      onClick={() => handleStageChange(stage)}
+                      className="flex flex-col items-center cursor-pointer group"
+                      title={`Move to ${stage}`}
+                    >
                       <div
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ${
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold transition-colors group-hover:ring-2 group-hover:ring-offset-1 ${
                           isDone
-                            ? 'bg-[var(--success)] text-white'
+                            ? 'bg-[var(--success)] text-white group-hover:ring-[var(--success)]'
                             : isActive
-                            ? 'bg-[var(--accent)] text-white'
-                            : 'bg-[var(--bg-tertiary)] text-[var(--text-muted)]'
+                            ? 'bg-[var(--accent)] text-white group-hover:ring-[var(--accent)]'
+                            : 'bg-[var(--bg-tertiary)] text-[var(--text-muted)] group-hover:ring-[var(--border)]'
                         }`}
+                        style={{ /* ring offset handled by tailwind */ }}
                       >
                         {isDone ? (
-                          <CheckCircle size={16} />
-                        ) : isActive ? (
-                          <Circle size={16} />
+                          <CheckCircle size={14} />
                         ) : (
-                          <Circle size={16} />
+                          <Circle size={14} />
                         )}
                       </div>
-                      <div className="text-xs text-[var(--text-muted)] whitespace-nowrap mt-1 max-w-[60px]">
+                      <div className="text-[10px] text-[var(--text-muted)] whitespace-nowrap mt-1 max-w-[55px] truncate">
                         {stage.split(' ').slice(0, 2).join(' ')}
                       </div>
-                    </div>
+                    </button>
                     {idx < stages.length - 1 && (
-                      <ChevronRight size={14} className="text-[var(--border)]" />
+                      <ChevronRight size={12} className="text-[var(--border)] mt-[-12px]" />
                     )}
                   </div>
                 );
@@ -140,23 +180,34 @@ export default function DetailPanel({ request, users, isOpen, onClose, onUpdate 
             </div>
           </div>
 
-          {/* Advance Stage Button */}
-          {nextStage && !isFinal && (
-            <button
-              onClick={handleAdvanceStage}
-              className="w-full px-4 py-2 rounded-md bg-[var(--accent)] text-white text-sm font-medium hover:opacity-90 transition-colors"
+          {/* Stage change dropdown + advance button */}
+          <div className="flex items-center gap-2">
+            <select
+              value={request.current_stage}
+              onChange={(e) => handleStageChange(e.target.value)}
+              className="flex-1 input-base text-sm"
             >
-              Advance to {nextStage}
-            </button>
-          )}
+              {stages.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+            {nextStage && !isFinal && (
+              <button
+                onClick={handleAdvanceStage}
+                className="gb-btn gb-btn-primary whitespace-nowrap"
+              >
+                → {nextStage.split(' ').slice(0, 2).join(' ')}
+              </button>
+            )}
+          </div>
 
-          {/* Stage-wise TAT Breakdown (business hours) */}
+          {/* Stage-wise TAT Breakdown */}
           <div>
-            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-faint)' }}>
               TAT Breakdown
-              <span className="ml-2 text-[10px] font-normal text-[var(--text-faint)] uppercase tracking-wider">
-                business hours
-              </span>
+              <span className="ml-1 font-normal">(business hours)</span>
             </h3>
             <div className="grid grid-cols-2 gap-2">
               {tatCategories.map((cat) => {
@@ -166,12 +217,13 @@ export default function DetailPanel({ request, users, isOpen, onClose, onUpdate 
                 return (
                   <div
                     key={cat.stage}
-                    className="p-2 rounded-md bg-[var(--bg-tertiary)] text-xs"
+                    className="p-2 rounded-md text-xs"
+                    style={{ backgroundColor: 'var(--bg-tertiary)' }}
                   >
-                    <div className="font-medium text-[var(--text-primary)]">
+                    <div className="font-medium" style={{ color: 'var(--text-primary)' }}>
                       {hours > 0 ? formatBusinessHours(hours) : '—'}
                     </div>
-                    <div className="text-[var(--text-muted)] truncate">
+                    <div className="truncate" style={{ color: 'var(--text-muted)' }}>
                       {cat.description}
                     </div>
                   </div>
@@ -182,44 +234,35 @@ export default function DetailPanel({ request, users, isOpen, onClose, onUpdate 
 
           {/* Request Details */}
           <div>
-            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-faint)' }}>
               Details
             </h3>
-            <div className="space-y-3 text-sm">
+            <div className="space-y-2.5 text-[13px]">
               <div className="flex justify-between">
-                <span className="text-[var(--text-secondary)]">Status:</span>
-                <span className={`font-medium px-2 py-0.5 rounded text-xs ${
-                  isFinal ? 'badge badge-green' : 'badge badge-blue'
-                }`}>
-                  {request.current_stage}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-[var(--text-secondary)]">Requested By:</span>
-                <span className="font-medium text-[var(--text-primary)]">
+                <span style={{ color: 'var(--text-secondary)' }}>Requested By:</span>
+                <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
                   {request.requested_by}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[var(--text-secondary)]">Requestor:</span>
-                <span className="font-medium text-[var(--text-primary)]">
+                <span style={{ color: 'var(--text-secondary)' }}>Requestor:</span>
+                <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
                   {request.requestor_name}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[var(--text-secondary)]">Created:</span>
-                <span className="font-medium text-[var(--text-primary)]">
+                <span style={{ color: 'var(--text-secondary)' }}>Created:</span>
+                <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
                   {new Date(request.created_at).toLocaleDateString()}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[var(--text-secondary)]">Need By:</span>
+                <span style={{ color: 'var(--text-secondary)' }}>Need By:</span>
                 <span
-                  className={`font-medium ${
-                    isOverdue(request)
-                      ? 'text-[var(--error)]'
-                      : 'text-[var(--text-primary)]'
-                  }`}
+                  className="font-medium"
+                  style={{
+                    color: isOverdue(request) ? 'var(--error)' : 'var(--text-primary)',
+                  }}
                 >
                   {new Date(request.need_by).toLocaleDateString()}
                   {isOverdue(request) && ' (Overdue)'}
@@ -227,36 +270,37 @@ export default function DetailPanel({ request, users, isOpen, onClose, onUpdate 
               </div>
               {request.description && (
                 <div>
-                  <span className="text-[var(--text-secondary)]">Description:</span>
-                  <p className="text-[var(--text-primary)] mt-1 whitespace-pre-wrap">
+                  <span style={{ color: 'var(--text-secondary)' }}>Description:</span>
+                  <p className="mt-1 whitespace-pre-wrap" style={{ color: 'var(--text-primary)' }}>
                     {request.description}
                   </p>
                 </div>
               )}
               {request.reference_link && (
-                <div>
-                  <span className="text-[var(--text-secondary)]">Reference:</span>
+                <div className="flex justify-between items-center">
+                  <span style={{ color: 'var(--text-secondary)' }}>Reference:</span>
                   <a
                     href={request.reference_link}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-[var(--accent)] hover:underline text-xs"
+                    className="text-[12px] inline-flex items-center gap-1 hover:underline"
+                    style={{ color: 'var(--accent)' }}
                   >
-                    {request.reference_link}
+                    Link <ExternalLink size={10} />
                   </a>
                 </div>
               )}
               {request.shoot_date && (
                 <div className="flex justify-between">
-                  <span className="text-[var(--text-secondary)]">Shoot Date:</span>
-                  <span className="font-medium text-[var(--text-primary)]">
+                  <span style={{ color: 'var(--text-secondary)' }}>Shoot Date:</span>
+                  <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
                     {new Date(request.shoot_date).toLocaleDateString()}
                   </span>
                 </div>
               )}
               <div className="flex justify-between">
-                <span className="text-[var(--text-secondary)]">Revisions:</span>
-                <span className="font-medium text-[var(--text-primary)]">
+                <span style={{ color: 'var(--text-secondary)' }}>Revisions:</span>
+                <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
                   {request.revisions}
                 </span>
               </div>
@@ -265,97 +309,124 @@ export default function DetailPanel({ request, users, isOpen, onClose, onUpdate 
 
           {/* POC Assignment */}
           <div>
-            <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-3">
-              POC Assignment
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-faint)' }}>
+              Assignment
             </h3>
-            <div className="space-y-3">
-              {/* Design POC / Main Assigned */}
+            <div className="space-y-2.5">
               <div>
-                <label className="text-xs font-medium text-[var(--text-secondary)] block mb-1">
-                  Assigned To
+                <label className="text-[11px] font-medium block mb-1" style={{ color: 'var(--text-secondary)' }}>
+                  Assigned To (Design)
                 </label>
                 <select
                   value={request.assigned_to || ''}
-                  onChange={(e) =>
-                    handlePOCChange('assigned_to', e.target.value)
-                  }
+                  onChange={(e) => handleFieldChange('assigned_to', e.target.value)}
                   className="w-full input-base text-sm"
                 >
                   <option value="">-- Select --</option>
                   {users.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
+                    <option key={u.id} value={u.id}>{u.name}</option>
                   ))}
                 </select>
               </div>
 
-              {/* Social POC */}
               <div>
-                <label className="text-xs font-medium text-[var(--text-secondary)] block mb-1">
+                <label className="text-[11px] font-medium block mb-1" style={{ color: 'var(--text-secondary)' }}>
                   Social POC
                 </label>
                 <select
                   value={request.social_poc || ''}
-                  onChange={(e) =>
-                    handlePOCChange('social_poc', e.target.value)
-                  }
+                  onChange={(e) => handleFieldChange('social_poc', e.target.value)}
                   className="w-full input-base text-sm"
                 >
                   <option value="">-- Select --</option>
                   {users.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
+                    <option key={u.id} value={u.id}>{u.name}</option>
                   ))}
                 </select>
               </div>
 
-              {/* Video POC */}
               {request.type === 'Video' && (
                 <div>
-                  <label className="text-xs font-medium text-[var(--text-secondary)] block mb-1">
+                  <label className="text-[11px] font-medium block mb-1" style={{ color: 'var(--text-secondary)' }}>
                     Video POC
                   </label>
                   <select
                     value={request.video_poc || ''}
-                    onChange={(e) =>
-                      handlePOCChange('video_poc', e.target.value)
-                    }
+                    onChange={(e) => handleFieldChange('video_poc', e.target.value)}
                     className="w-full input-base text-sm"
                   >
                     <option value="">-- Select --</option>
                     {users.map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {u.name}
-                      </option>
+                      <option key={u.id} value={u.id}>{u.name}</option>
                     ))}
                   </select>
                 </div>
               )}
 
-              {/* Upload POC */}
               <div>
-                <label className="text-xs font-medium text-[var(--text-secondary)] block mb-1">
+                <label className="text-[11px] font-medium block mb-1" style={{ color: 'var(--text-secondary)' }}>
                   Upload POC
                 </label>
                 <select
                   value={request.upload_poc || ''}
-                  onChange={(e) =>
-                    handlePOCChange('upload_poc', e.target.value)
-                  }
+                  onChange={(e) => handleFieldChange('upload_poc', e.target.value)}
                   className="w-full input-base text-sm"
                 >
                   <option value="">-- Select --</option>
                   {users.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name}
-                    </option>
+                    <option key={u.id} value={u.id}>{u.name}</option>
                   ))}
                 </select>
               </div>
             </div>
           </div>
+
+          {/* Upload Links — shown when request is Done / Uploaded / Ready to Upload */}
+          {(isFinal || isReadyToUpload) && (
+            <div>
+              <h3 className="text-[11px] font-semibold uppercase tracking-wider mb-2 flex items-center gap-1.5" style={{ color: 'var(--text-faint)' }}>
+                <Link2 size={12} />
+                Upload Links
+              </h3>
+              <div className="space-y-2.5">
+                {linkFields.map(({ key, label, placeholder }) => (
+                  <div key={key}>
+                    <label className="text-[11px] font-medium block mb-1" style={{ color: 'var(--text-secondary)' }}>
+                      {label}
+                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="url"
+                        value={uploadLinks[key as keyof typeof uploadLinks]}
+                        onChange={(e) =>
+                          setUploadLinks((prev) => ({ ...prev, [key]: e.target.value }))
+                        }
+                        placeholder={placeholder}
+                        className="flex-1 input-base text-sm"
+                      />
+                      {uploadLinks[key as keyof typeof uploadLinks] && (
+                        <a
+                          href={uploadLinks[key as keyof typeof uploadLinks]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="gb-icon-btn flex-shrink-0"
+                          title={`Open ${label}`}
+                        >
+                          <ExternalLink size={12} />
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <button
+                  onClick={handleUploadLinkSave}
+                  className="w-full gb-btn gb-btn-secondary mt-1 justify-center"
+                >
+                  Save links
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -363,14 +434,19 @@ export default function DetailPanel({ request, users, isOpen, onClose, onUpdate 
           {!isFinal && (
             <button
               onClick={handleMarkComplete}
-              className="w-full px-4 py-2 rounded-md bg-[var(--success)] text-white text-sm font-medium hover:opacity-90 transition-colors"
+              className="w-full px-4 py-2 rounded-md text-white text-sm font-medium hover:opacity-90 transition-colors"
+              style={{ backgroundColor: 'var(--success)' }}
             >
               Mark Complete
             </button>
           )}
           <button
             onClick={onClose}
-            className="w-full px-4 py-2 rounded-md border border-[var(--border)] text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors text-sm font-medium"
+            className="w-full px-4 py-2 rounded-md border text-sm font-medium transition-colors"
+            style={{
+              borderColor: 'var(--border)',
+              color: 'var(--text-primary)',
+            }}
           >
             Close
           </button>

@@ -48,6 +48,11 @@ export interface Request {
   social_poc?: string;
   video_poc?: string;
   upload_poc?: string;
+  /** Social media upload links — filled once the content is published. */
+  youtube_link?: string;
+  instagram_link?: string;
+  linkedin_link?: string;
+  pinterest_link?: string;
   shoot_date?: string; // DATE format: YYYY-MM-DD
   revisions: number;
   /** ISO timestamp when the request was raised. */

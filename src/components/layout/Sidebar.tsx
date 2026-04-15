@@ -17,7 +17,7 @@ import {
   Upload,
   BookOpen,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useRole } from './RoleContext';
 
 interface NavItem {
   label: string;
@@ -109,18 +109,12 @@ const navSections: NavSection[] = [
   },
 ];
 
-type RoleType = 'manager' | 'individual';
-
 export default function Sidebar() {
   const pathname = usePathname();
-  const [role, setRole] = useState<RoleType>('individual');
+  const { role, toggleRole } = useRole();
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + '/');
-
-  const toggleRole = () => {
-    setRole(role === 'manager' ? 'individual' : 'manager');
-  };
 
   return (
     <aside className="gb-sidebar w-64 flex flex-col h-screen fixed left-0 top-0 z-30">

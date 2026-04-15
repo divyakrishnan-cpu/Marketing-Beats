@@ -1,15 +1,17 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { List, Columns3, CalendarDays, X } from 'lucide-react';
+import { List, Columns3, CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Request, RequestType } from '@/types';
 import {
   SAMPLE_REQUESTS,
+  SAMPLE_USERS,
   getUserById,
   formatDate,
   getInitials,
   isOverdue,
   getDaysUntilDue,
+  getStagesForType,
 } from '@/lib/sample-data';
 import {
   getDeliveryTAT,
@@ -17,24 +19,42 @@ import {
   formatBusinessHours,
   SLA_HOURS,
 } from '@/lib/tat';
+import DetailPanel from '@/components/design-ops/DetailPanel';
 
 type ViewType = 'list' | 'kanban' | 'calendar';
 type SortField = 'need_by' | 'created_at' | null;
 
 export default function AllRequestsPage() {
+  const [requests, setRequests] = useState<Request[]>(SAMPLE_REQUESTS);
   const [currentView, setCurrentView] = useState<ViewType>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilters, setTypeFilters] = useState<RequestType[]>([]);
   const [stageFilters, setStageFilters] = useState<string[]>([]);
   const [sortField, setSortField] = useState<SortField>('need_by');
   const [sortAscending, setSortAscending] = useState(true);
-  const [selectedRow, setSelectedRow] = useState<string | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date('2026-04-01'));
   const [draggedRequest, setDraggedRequest] = useState<Request | null>(null);
 
+  const handleOpenRequest = (req: Request) => {
+    setSelectedRequest(req);
+    setIsPanelOpen(true);
+  };
+
+  const handleUpdateRequest = (updated: Request) => {
+    setRequests((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+    setSelectedRequest(updated);
+  };
+
+  const handleClosePanel = () => {
+    setIsPanelOpen(false);
+    setSelectedRequest(null);
+  };
+
   // Filter and sort requests
   const filteredRequests = useMemo(() => {
-    let filtered = SAMPLE_REQUESTS.filter(req => {
+    let filtered = requests.filter(req => {
       const matchesSearch =
         req.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         req.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -46,19 +66,15 @@ export default function AllRequestsPage() {
       return matchesSearch && matchesType && matchesStage;
     });
 
-    // Sort
     if (sortField) {
       filtered.sort((a, b) => {
         let aVal: any = a[sortField as keyof Request];
         let bVal: any = b[sortField as keyof Request];
-
         if (!aVal || !bVal) return 0;
-
         if (sortField === 'need_by' || sortField === 'created_at') {
           aVal = new Date(aVal as string).getTime();
           bVal = new Date(bVal as string).getTime();
         }
-
         if (aVal < bVal) return sortAscending ? -1 : 1;
         if (aVal > bVal) return sortAscending ? 1 : -1;
         return 0;
@@ -66,69 +82,45 @@ export default function AllRequestsPage() {
     }
 
     return filtered;
-  }, [searchQuery, typeFilters, stageFilters, sortField, sortAscending]);
+  }, [requests, searchQuery, typeFilters, stageFilters, sortField, sortAscending]);
 
-  // Get all unique stages across filtered requests
   const allStages = useMemo(() => {
     const stages = new Set<string>();
-    SAMPLE_REQUESTS.forEach(req => {
-      stages.add(req.current_stage);
-    });
+    requests.forEach(req => stages.add(req.current_stage));
     return Array.from(stages).sort();
-  }, []);
+  }, [requests]);
 
-  // Kanban columns - only stages with requests
   const kanbanStages = useMemo(() => {
     const stagesWithRequests = new Set<string>();
-    filteredRequests.forEach(req => {
-      stagesWithRequests.add(req.current_stage);
-    });
+    filteredRequests.forEach(req => stagesWithRequests.add(req.current_stage));
     return Array.from(stagesWithRequests).sort();
   }, [filteredRequests]);
 
-  // Type color map for badges
   const typeColors: Record<RequestType, { badge: string; dot: string }> = {
     Video: { badge: 'gb-badge-blue', dot: 'var(--info)' },
     'Social Media Graphics': { badge: 'gb-badge-green', dot: 'var(--success)' },
     Graphics: { badge: 'gb-badge-yellow', dot: 'var(--warning)' }
   };
 
-  // Stage badge classes map
   const stageBadgeClasses: Record<string, string> = {
-    'Done': 'gb-badge-green',
-    'Uploaded': 'gb-badge-green',
-    'Change Req': 'gb-badge-red',
-    'Assigned': 'gb-badge-blue',
-    'Ready to Upload': 'gb-badge-yellow',
-    'Design Done': 'gb-badge-yellow',
-    'Editing Done': 'gb-badge-yellow',
-    'Shoot Done': 'gb-badge-yellow',
-    'Design In Progress': 'gb-badge-blue',
-    'Editing In Progress': 'gb-badge-blue',
-    'Content': 'gb-badge-blue',
-    'Planning': 'gb-badge-blue',
+    'Done': 'gb-badge-green', 'Uploaded': 'gb-badge-green',
+    'Change Req': 'gb-badge-red', 'Assigned': 'gb-badge-blue',
+    'Ready to Upload': 'gb-badge-yellow', 'Design Done': 'gb-badge-yellow',
+    'Editing Done': 'gb-badge-yellow', 'Shoot Done': 'gb-badge-yellow',
+    'Design In Progress': 'gb-badge-blue', 'Editing In Progress': 'gb-badge-blue',
+    'Content': 'gb-badge-blue', 'Planning': 'gb-badge-blue',
     'Shooting Scheduled': 'gb-badge-blue'
   };
 
-  const toggleTypeFilter = (type: RequestType) => {
-    setTypeFilters(prev =>
-      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
-    );
-  };
+  const toggleTypeFilter = (type: RequestType) =>
+    setTypeFilters(prev => prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]);
 
-  const toggleStageFilter = (stage: string) => {
-    setStageFilters(prev =>
-      prev.includes(stage) ? prev.filter(s => s !== stage) : [...prev, stage]
-    );
-  };
+  const toggleStageFilter = (stage: string) =>
+    setStageFilters(prev => prev.includes(stage) ? prev.filter(s => s !== stage) : [...prev, stage]);
 
   const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortAscending(!sortAscending);
-    } else {
-      setSortField(field);
-      setSortAscending(true);
-    }
+    if (sortField === field) setSortAscending(!sortAscending);
+    else { setSortField(field); setSortAscending(true); }
   };
 
   const handleDragStart = (e: React.DragEvent, request: Request) => {
@@ -143,20 +135,50 @@ export default function AllRequestsPage() {
 
   const handleDrop = (e: React.DragEvent, newStage: string) => {
     e.preventDefault();
-    if (draggedRequest) {
-      // In a real app, update the request stage in the database
-      console.log(`Moving ${draggedRequest.id} to stage: ${newStage}`);
-      setDraggedRequest(null);
+    if (draggedRequest && newStage !== draggedRequest.current_stage) {
+      const nowIso = new Date().toISOString();
+      const updated: Request = {
+        ...draggedRequest,
+        current_stage: newStage as Request['current_stage'],
+        updated_at: nowIso,
+        transitions: [
+          ...(draggedRequest.transitions ?? []),
+          {
+            id: `tr-${draggedRequest.id}-${Date.now()}`,
+            request_id: draggedRequest.id,
+            from_stage: draggedRequest.current_stage,
+            to_stage: newStage as Request['current_stage'],
+            transitioned_at: nowIso,
+            transitioned_by: draggedRequest.assigned_to ?? 'user-divya-krishnan',
+          },
+        ],
+      };
+      setRequests((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
     }
+    setDraggedRequest(null);
   };
 
-  // Calendar helpers
-  const getDaysInMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-  };
-
-  const getFirstDayOfMonth = (date: Date) => {
-    return new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+  /* ---- Quick inline stage change on list view ---- */
+  const handleInlineStageChange = (req: Request, newStage: string) => {
+    if (newStage === req.current_stage) return;
+    const nowIso = new Date().toISOString();
+    const updated: Request = {
+      ...req,
+      current_stage: newStage as Request['current_stage'],
+      updated_at: nowIso,
+      transitions: [
+        ...(req.transitions ?? []),
+        {
+          id: `tr-${req.id}-${Date.now()}`,
+          request_id: req.id,
+          from_stage: req.current_stage,
+          to_stage: newStage as Request['current_stage'],
+          transitioned_at: nowIso,
+          transitioned_by: req.assigned_to ?? 'user-divya-krishnan',
+        },
+      ],
+    };
+    setRequests((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
   };
 
   const requestsByDate = useMemo(() => {
@@ -176,14 +198,10 @@ export default function AllRequestsPage() {
             <tr>
               <th>Title</th>
               <th>Type</th>
-              <th>Requested By</th>
               <th>Requestor</th>
               <th>Stage</th>
-              <th>Design POC</th>
-              <th
-                onClick={() => handleSort('need_by')}
-                style={{ cursor: 'pointer' }}
-              >
+              <th>Assigned To</th>
+              <th onClick={() => handleSort('need_by')} style={{ cursor: 'pointer' }}>
                 Need By {sortField === 'need_by' && (sortAscending ? '↑' : '↓')}
               </th>
               <th>TAT</th>
@@ -192,17 +210,14 @@ export default function AllRequestsPage() {
           <tbody>
             {filteredRequests.map(req => {
               const assignee = getUserById(req.assigned_to);
-              const isRowOverdue = isOverdue(req.need_by);
+              const isRowOverdue = isOverdue(req);
+              const stages = getStagesForType(req.type);
               return (
-                <tr
-                  key={req.id}
-                  onClick={() => setSelectedRow(selectedRow === req.id ? null : req.id)}
-                  style={{
-                    backgroundColor: isRowOverdue ? 'var(--error-bg)' : 'transparent',
-                    cursor: 'pointer'
-                  }}
-                >
-                  <td style={{ fontWeight: 500, color: 'var(--text-primary)' }}>
+                <tr key={req.id} style={{ backgroundColor: isRowOverdue ? 'var(--error-bg)' : 'transparent' }}>
+                  <td
+                    style={{ fontWeight: 500, color: 'var(--accent)', cursor: 'pointer' }}
+                    onClick={() => handleOpenRequest(req)}
+                  >
                     {req.title}
                   </td>
                   <td>
@@ -210,41 +225,34 @@ export default function AllRequestsPage() {
                       {req.type === 'Social Media Graphics' ? 'SMG' : req.type}
                     </span>
                   </td>
-                  <td style={{ color: 'var(--text-secondary)' }}>
-                    {req.requested_by}
-                  </td>
-                  <td style={{ color: 'var(--text-secondary)' }}>
-                    {req.requestor_name}
-                  </td>
+                  <td style={{ color: 'var(--text-secondary)' }}>{req.requestor_name}</td>
                   <td>
-                    <span className={`gb-badge ${stageBadgeClasses[req.current_stage] || 'gb-badge-gray'}`}>
-                      {req.current_stage}
-                    </span>
+                    <select
+                      value={req.current_stage}
+                      onChange={(e) => handleInlineStageChange(req, e.target.value)}
+                      className="input-base text-[11px] py-0.5 px-1.5"
+                      style={{ minWidth: '120px' }}
+                    >
+                      {stages.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
                   </td>
                   <td style={{ color: 'var(--text-secondary)' }}>
                     {assignee ? assignee.name : 'Unassigned'}
                   </td>
                   <td style={{ fontWeight: 500, color: isRowOverdue ? 'var(--error)' : 'var(--text-secondary)' }}>
                     {formatDate(req.need_by)}
-                    {isRowOverdue && <span style={{ marginLeft: '8px', fontWeight: 'bold', color: 'var(--error)' }}>OVERDUE</span>}
+                    {isRowOverdue && <span style={{ marginLeft: '6px', fontWeight: 'bold', color: 'var(--error)', fontSize: '10px' }}>OVERDUE</span>}
                   </td>
-                  <td style={{ color: 'var(--text-secondary)' }}>
+                  <td>
                     {(() => {
                       const delivered = getDeliveryTAT(req.transitions ?? [], req.type);
                       const active = delivered ?? calculateActiveTAT(req.transitions ?? []);
                       const sla = SLA_HOURS[req.type];
                       const ratio = active / sla;
-                      const color =
-                        ratio <= 0.8
-                          ? 'var(--success)'
-                          : ratio <= 1.0
-                          ? 'var(--warning)'
-                          : 'var(--error)';
-                      return (
-                        <span style={{ color, fontWeight: 500 }}>
-                          {formatBusinessHours(active)}
-                        </span>
-                      );
+                      const color = ratio <= 0.8 ? 'var(--success)' : ratio <= 1.0 ? 'var(--warning)' : 'var(--error)';
+                      return <span style={{ color, fontWeight: 500 }}>{formatBusinessHours(active)}</span>;
                     })()}
                   </td>
                 </tr>
@@ -253,8 +261,8 @@ export default function AllRequestsPage() {
           </tbody>
         </table>
       </div>
-      <div style={{ padding: '12px 14px', backgroundColor: 'var(--bg-tertiary)', borderTop: '1px solid var(--border)', fontSize: '13px', color: 'var(--text-secondary)' }}>
-        {filteredRequests.length} of {SAMPLE_REQUESTS.length} requests
+      <div style={{ padding: '10px 14px', backgroundColor: 'var(--bg-tertiary)', borderTop: '1px solid var(--border)', fontSize: '12px', color: 'var(--text-secondary)' }}>
+        {filteredRequests.length} of {requests.length} requests
       </div>
     </div>
   );
@@ -265,58 +273,37 @@ export default function AllRequestsPage() {
         {kanbanStages.map(stage => {
           const stageRequests = filteredRequests.filter(r => r.current_stage === stage);
           return (
-            <div
-              key={stage}
-              className="flex-shrink-0 w-80 gb-card"
-              style={{ display: 'flex', flexDirection: 'column' }}
-              onDragOver={handleDragOver}
-              onDrop={e => handleDrop(e, stage)}
-            >
-              <div style={{ padding: '16px', borderBottom: '1px solid var(--border)' }}>
-                <h3 style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div key={stage} className="flex-shrink-0 w-72 gb-card" style={{ display: 'flex', flexDirection: 'column' }}
+              onDragOver={handleDragOver} onDrop={e => handleDrop(e, stage)}>
+              <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border)' }}>
+                <h3 className="text-[13px] font-semibold" style={{ color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                   {stage}
-                  <span className="gb-badge gb-badge-blue" style={{ marginLeft: '8px' }}>{stageRequests.length}</span>
+                  <span className="gb-badge gb-badge-blue">{stageRequests.length}</span>
                 </h3>
               </div>
-              <div style={{ maxHeight: '384px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px' }}>
+              <div style={{ maxHeight: '480px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px' }}>
                 {stageRequests.map(req => {
                   const assignee = getUserById(req.assigned_to);
                   const daysUntilDue = getDaysUntilDue(req.need_by);
                   const isOverdueReq = daysUntilDue < 0;
-                  const isDueSoon = daysUntilDue <= 2 && daysUntilDue >= 0;
-
                   return (
-                    <div
-                      key={req.id}
-                      draggable
-                      onDragStart={e => handleDragStart(e, req)}
-                      className="gb-card gb-card-hover"
-                      style={{ padding: '12px', cursor: 'move' }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '8px' }}>
+                    <div key={req.id} draggable onDragStart={e => handleDragStart(e, req)}
+                      className="gb-card gb-card-hover" style={{ padding: '10px', cursor: 'move' }}
+                      onClick={() => handleOpenRequest(req)}>
+                      <div className="flex items-center gap-1.5 mb-1.5">
                         <span className={`gb-badge ${typeColors[req.type].badge}`}>
                           {req.type === 'Social Media Graphics' ? 'SMG' : req.type}
                         </span>
                       </div>
-                      <h4 style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)', marginBottom: '8px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      <h4 className="text-[13px] font-semibold mb-1" style={{ color: 'var(--text-primary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                         {req.title}
                       </h4>
-                      <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                        {req.requestor_name}
-                      </p>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid var(--border)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {assignee && (
-                            <div style={{ width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold', color: 'white', backgroundColor: typeColors[req.type].dot }}>
-                              {getInitials(assignee.name)}
-                            </div>
-                          )}
-                          <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                            {assignee ? assignee.name.split(' ')[0] : 'Unassigned'}
-                          </span>
-                        </div>
-                        <span style={{ fontSize: '12px', fontWeight: 500, color: isOverdueReq ? 'var(--error)' : isDueSoon ? 'var(--warning)' : 'var(--text-muted)' }}>
-                          {isOverdueReq ? 'OVERDUE' : isDueSoon ? 'Due soon' : formatDate(req.need_by)}
+                      <div className="flex items-center justify-between mt-2 pt-2" style={{ borderTop: '1px solid var(--border)' }}>
+                        <span className="text-[11px]" style={{ color: 'var(--text-secondary)' }}>
+                          {assignee ? assignee.name.split(' ')[0] : 'Unassigned'}
+                        </span>
+                        <span className="text-[11px] font-medium" style={{ color: isOverdueReq ? 'var(--error)' : 'var(--text-muted)' }}>
+                          {isOverdueReq ? 'OVERDUE' : formatDate(req.need_by)}
                         </span>
                       </div>
                     </div>
@@ -331,116 +318,51 @@ export default function AllRequestsPage() {
   );
 
   const renderCalendarView = () => {
-    const daysInMonth = getDaysInMonth(currentMonth);
-    const firstDay = getFirstDayOfMonth(currentMonth);
-    const days = [];
+    const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+    const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
+    const days: (number | null)[] = [];
+    for (let i = 0; i < firstDay; i++) days.push(null);
+    for (let i = 1; i <= daysInMonth; i++) days.push(i);
+    while (days.length % 7 !== 0) days.push(null);
 
-    // Empty cells for days before month starts
-    for (let i = 0; i < firstDay; i++) {
-      days.push(null);
-    }
-
-    // Days of the month
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push(i);
-    }
-
-    const today = new Date('2026-04-08');
-    const isCurrentMonth = currentMonth.getMonth() === today.getMonth() && currentMonth.getFullYear() === today.getFullYear();
-
-    const prevMonth = () => {
-      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1));
-    };
-
-    const nextMonth = () => {
-      setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1));
-    };
+    const todayStr = new Date().toISOString().split('T')[0];
 
     return (
-      <div className="gb-card" style={{ padding: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>
+      <div className="gb-card" style={{ padding: '20px' }}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-[15px] font-semibold" style={{ color: 'var(--text-primary)' }}>
             {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </h3>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              onClick={prevMonth}
-              className="gb-icon-btn"
-            >
-              ←
-            </button>
-            <button
-              onClick={nextMonth}
-              className="gb-icon-btn"
-            >
-              →
-            </button>
+          <div className="flex gap-1">
+            <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))} className="gb-icon-btn"><ChevronLeft size={14} /></button>
+            <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))} className="gb-icon-btn"><ChevronRight size={14} /></button>
           </div>
         </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', marginBottom: '16px' }}>
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} style={{ textAlign: 'center', fontWeight: 600, fontSize: '12px', color: 'var(--text-muted)', padding: '8px 0' }}>
-              {day}
-            </div>
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+            <div key={d} className="text-center text-[11px] font-semibold uppercase tracking-wider py-1" style={{ color: 'var(--text-faint)' }}>{d}</div>
           ))}
         </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
+        <div className="grid grid-cols-7 gap-1">
           {days.map((day, idx) => {
-            if (day === null) {
-              return (
-                <div
-                  key={`empty-${idx}`}
-                  style={{ minHeight: '80px', backgroundColor: 'var(--bg-secondary)', opacity: 0.5, borderRadius: 'var(--radius-md)' }}
-                />
-              );
-            }
-
+            if (day === null) return <div key={`e-${idx}`} className="min-h-[70px] rounded-md" style={{ backgroundColor: 'var(--bg-secondary)', opacity: 0.4 }} />;
             const dateStr = `${currentMonth.getFullYear()}-${String(currentMonth.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-            const requestsOnDay = requestsByDate[dateStr] || [];
-            const isToday = isCurrentMonth && day === today.getDate();
-
+            const dayReqs = requestsByDate[dateStr] || [];
+            const isToday = dateStr === todayStr;
             return (
-              <div
-                key={day}
-                style={{
-                  minHeight: '80px',
-                  borderRadius: 'var(--radius-md)',
-                  border: `1px solid ${isToday ? 'var(--accent)' : 'var(--border)'}`,
-                  padding: '8px',
-                  overflow: 'hidden',
-                  backgroundColor: isToday ? 'var(--accent-light)' : 'var(--bg-card)'
-                }}
-              >
-                <div style={{ fontSize: '12px', fontWeight: 600, color: isToday ? 'var(--accent-text)' : 'var(--text-muted)', marginBottom: '4px' }}>
-                  {day}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  {requestsOnDay.slice(0, 3).map(req => (
-                    <div
-                      key={req.id}
-                      style={{
-                        fontSize: '11px',
-                        padding: '4px 6px',
-                        borderRadius: '4px',
-                        color: 'white',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        backgroundColor: typeColors[req.type].dot
-                      }}
-                      title={req.title}
-                    >
-                      {req.type === 'Social Media Graphics' ? 'SMG' : req.type === 'Video' ? 'Video' : 'Gfx'}
-                    </div>
-                  ))}
-                  {requestsOnDay.length > 3 && (
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                      +{requestsOnDay.length - 3} more
-                    </div>
-                  )}
-                </div>
+              <div key={day} className="min-h-[70px] rounded-md p-1.5" style={{
+                border: `1px solid ${isToday ? 'var(--accent)' : 'var(--border)'}`,
+                backgroundColor: isToday ? 'var(--accent-light)' : 'var(--bg-card)',
+              }}>
+                <div className="text-[11px] font-semibold mb-1" style={{ color: isToday ? 'var(--accent-text)' : 'var(--text-muted)' }}>{day}</div>
+                {dayReqs.slice(0, 2).map(req => (
+                  <div key={req.id} onClick={() => handleOpenRequest(req)}
+                    className="text-[10px] px-1 py-0.5 rounded mb-0.5 truncate cursor-pointer"
+                    style={{ backgroundColor: 'var(--accent-light)', color: 'var(--accent-text)' }} title={req.title}>
+                    {req.title}
+                  </div>
+                ))}
+                {dayReqs.length > 2 && <div className="text-[10px]" style={{ color: 'var(--text-faint)' }}>+{dayReqs.length - 2}</div>}
               </div>
             );
           })}
@@ -451,21 +373,17 @@ export default function AllRequestsPage() {
 
   return (
     <div>
-      {/* Page Header */}
-      <div className="gb-page-header">
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '24px' }}>
-          <div style={{ flex: 1 }}>
-            <h1 className="gb-page-title">All Requests</h1>
-            <p className="gb-page-description">Browse, filter, and manage every design request across Graphics and Video workflows.</p>
-          </div>
-          <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
-            {filteredRequests.length} of {SAMPLE_REQUESTS.length} requests
-          </div>
+      <div className="gb-page-header flex items-start justify-between gap-6">
+        <div>
+          <h1 className="gb-page-title">All Requests</h1>
+          <p className="gb-page-description">Browse, filter, and manage every design request. Click any title to open the detail panel, or change the stage directly from the table.</p>
+        </div>
+        <div className="text-[13px]" style={{ color: 'var(--text-faint)' }}>
+          {filteredRequests.length} of {requests.length}
         </div>
       </div>
 
-      {/* View Switcher Tabs */}
-      <div className="gb-tabs" style={{ marginBottom: '24px' }}>
+      <div className="gb-tabs" style={{ marginBottom: '20px' }}>
         {[
           { id: 'list' as const, icon: List, label: 'List' },
           { id: 'kanban' as const, icon: Columns3, label: 'Kanban' },
@@ -473,85 +391,55 @@ export default function AllRequestsPage() {
         ].map(view => {
           const Icon = view.icon;
           return (
-            <div
-              key={view.id}
-              onClick={() => setCurrentView(view.id)}
+            <div key={view.id} onClick={() => setCurrentView(view.id)}
               className={`gb-tab ${currentView === view.id ? 'gb-tab-active' : ''}`}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-            >
-              <Icon size={16} />
-              {view.label}
+              style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <Icon size={14} />{view.label}
             </div>
           );
         })}
       </div>
 
-      {/* Filters Section */}
-      <div style={{ marginBottom: '24px' }}>
-        {/* Search Bar */}
-        <div className="gb-search" style={{ marginBottom: '16px' }}>
-          <span style={{ display: 'flex', alignItems: 'center', color: 'var(--text-muted)' }}>🔍</span>
-          <input
-            type="text"
-            placeholder="Search by title, ID, or requestor..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-          />
+      {/* Filters */}
+      <div style={{ marginBottom: '20px' }}>
+        <div className="gb-search" style={{ marginBottom: '12px' }}>
+          <span style={{ display: 'flex', alignItems: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>&#128269;</span>
+          <input type="text" placeholder="Search by title, ID, or requestor..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
         </div>
-
-        {/* Type Filters */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '12px' }}>
-          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Type:</span>
+        <div className="flex items-center gap-2 flex-wrap mb-2">
+          <span className="text-[12px] font-semibold" style={{ color: 'var(--text-faint)' }}>Type:</span>
           {['All', 'Video', 'Social Media Graphics', 'Graphics'].map(type => {
             const isActive = type === 'All' ? typeFilters.length === 0 : typeFilters.includes(type as RequestType);
             return (
-              <button
-                key={type}
-                onClick={() => {
-                  if (type === 'All') {
-                    setTypeFilters([]);
-                  } else {
-                    toggleTypeFilter(type as RequestType);
-                  }
-                }}
-                className={`gb-btn ${isActive ? 'gb-btn-primary' : 'gb-btn-secondary'}`}
-              >
-                {type}
-              </button>
+              <button key={type} onClick={() => type === 'All' ? setTypeFilters([]) : toggleTypeFilter(type as RequestType)}
+                className={`gb-btn ${isActive ? 'gb-btn-primary' : 'gb-btn-secondary'}`}>{type === 'Social Media Graphics' ? 'SMG' : type}</button>
             );
           })}
         </div>
-
-        {/* Stage Filters */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>Stage:</span>
-          {['All', 'Assigned', 'In Progress', 'Review', 'Completed', 'Change Req'].map(stage => {
-            const isActive = stage === 'All' ? stageFilters.length === 0 : stageFilters.includes(stage);
-            return (
-              <button
-                key={stage}
-                onClick={() => {
-                  if (stage === 'All') {
-                    setStageFilters([]);
-                  } else {
-                    toggleStageFilter(stage);
-                  }
-                }}
-                className={`gb-btn ${isActive ? 'gb-btn-primary' : 'gb-btn-secondary'}`}
-              >
-                {stage}
-              </button>
-            );
-          })}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[12px] font-semibold" style={{ color: 'var(--text-faint)' }}>Stage:</span>
+          <button onClick={() => setStageFilters([])} className={`gb-btn ${stageFilters.length === 0 ? 'gb-btn-primary' : 'gb-btn-secondary'}`}>All</button>
+          {allStages.map(stage => (
+            <button key={stage} onClick={() => toggleStageFilter(stage)}
+              className={`gb-btn ${stageFilters.includes(stage) ? 'gb-btn-primary' : 'gb-btn-secondary'}`}>{stage}</button>
+          ))}
         </div>
       </div>
 
-      {/* View Content */}
-      <div>
-        {currentView === 'list' && renderListView()}
-        {currentView === 'kanban' && renderKanbanView()}
-        {currentView === 'calendar' && renderCalendarView()}
-      </div>
+      {currentView === 'list' && renderListView()}
+      {currentView === 'kanban' && renderKanbanView()}
+      {currentView === 'calendar' && renderCalendarView()}
+
+      {/* Detail Panel */}
+      {selectedRequest && (
+        <DetailPanel
+          request={selectedRequest}
+          users={SAMPLE_USERS}
+          isOpen={isPanelOpen}
+          onClose={handleClosePanel}
+          onUpdate={handleUpdateRequest}
+        />
+      )}
     </div>
   );
 }
