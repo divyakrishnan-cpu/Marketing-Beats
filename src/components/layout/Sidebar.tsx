@@ -17,6 +17,9 @@ import {
   Upload,
   BookOpen,
 } from 'lucide-react';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import { useRole } from './RoleContext';
 
 interface NavItem {
@@ -111,10 +114,17 @@ const navSections: NavSection[] = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { role, toggleRole } = useRole();
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + '/');
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/auth/login');
+  };
 
   return (
     <aside className="gb-sidebar w-64 flex flex-col h-screen fixed left-0 top-0 z-30">
@@ -206,8 +216,33 @@ export default function Sidebar() {
       </nav>
 
       {/* User footer */}
-      <div className="px-3 py-3 border-t" style={{ borderColor: 'var(--border)' }}>
-        <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-[var(--bg-hover)] cursor-pointer transition-colors">
+      <div className="px-3 py-3 border-t relative" style={{ borderColor: 'var(--border)' }}>
+        {/* Popup menu */}
+        {showUserMenu && (
+          <div
+            className="absolute bottom-full left-3 right-3 mb-1 rounded-md overflow-hidden"
+            style={{
+              backgroundColor: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              boxShadow: 'var(--shadow-md)',
+              zIndex: 50,
+            }}
+          >
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-[13px] transition-colors hover:bg-[var(--bg-hover)]"
+              style={{ color: 'var(--error)' }}
+            >
+              <LogOut size={14} strokeWidth={1.75} />
+              Sign out
+            </button>
+          </div>
+        )}
+
+        <div
+          className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-[var(--bg-hover)] cursor-pointer transition-colors"
+          onClick={() => setShowUserMenu(!showUserMenu)}
+        >
           <div
             className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-semibold flex-shrink-0"
             style={{
