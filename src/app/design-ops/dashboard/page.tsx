@@ -37,29 +37,20 @@ import {
 import RequestModal from '@/components/design-ops/RequestModal';
 import DetailPanel from '@/components/design-ops/DetailPanel';
 import { useRole } from '@/components/layout/RoleContext';
+import { useCurrentUser } from '@/components/layout/CurrentUserContext';
 
 /* ------------------------------------------------------------------ */
 /*  Shared helpers                                                     */
 /* ------------------------------------------------------------------ */
 
-const ACTIVE_USER = 'user-john-antony'; // Individual mode "logged-in user"
-
-const MAKER_IDS = [
-  'user-john-antony',
-  'user-lalit-bhardwaj',
-  'user-vaibhav-jain',
-  'user-sakshi-sharma',
-  'user-kiran-nair',
-  'user-priya-patel',
-  'user-arjun-reddy',
-  'user-meera-gupta',
-  'user-aditya-kumar',
-  'user-neha-singh',
-  'user-rohan-verma',
-];
+// Team roster — anyone who can have work assigned to them shows up in the
+// manager's workload table. We derive this from SAMPLE_USERS so new joiners
+// show up automatically.
+const MAKER_IDS = SAMPLE_USERS.filter((u) => u.is_active).map((u) => u.id);
 
 export default function DashboardPage() {
   const { role } = useRole();
+  const { currentUser } = useCurrentUser();
   const [requests, setRequests] = useState<Request[]>(SAMPLE_REQUESTS);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<Request | null>(null);
@@ -126,7 +117,12 @@ export default function DashboardPage() {
       </div>
 
       {role === 'individual' ? (
-        <IndividualDashboard requests={requests} onOpen={handleOpenRequest} />
+        <IndividualDashboard
+          requests={requests}
+          onOpen={handleOpenRequest}
+          currentUserId={currentUser?.id ?? null}
+          currentUserName={currentUser?.name ?? null}
+        />
       ) : (
         <ManagerDashboard requests={requests} onOpen={handleOpenRequest} onUpdate={handleUpdateRequest} />
       )}
@@ -152,13 +148,17 @@ export default function DashboardPage() {
 function IndividualDashboard({
   requests,
   onOpen,
+  currentUserId,
+  currentUserName,
 }: {
   requests: Request[];
   onOpen: (r: Request) => void;
+  currentUserId: string | null;
+  currentUserName: string | null;
 }) {
   const myRequests = useMemo(
-    () => requests.filter((r) => r.assigned_to === ACTIVE_USER),
-    [requests],
+    () => (currentUserId ? requests.filter((r) => r.assigned_to === currentUserId) : []),
+    [requests, currentUserId],
   );
 
   const pending = myRequests.filter((r) => !isFinal(r));
@@ -183,10 +183,15 @@ function IndividualDashboard({
     });
   }, [pending]);
 
-  const userName = getUserById(ACTIVE_USER)?.name ?? 'You';
+  const userName = currentUserName ?? 'You';
 
   return (
     <>
+      {/* Greeting */}
+      <div className="mb-6 text-[13px]" style={{ color: 'var(--text-secondary)' }}>
+        Welcome back, <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{userName}</span>.
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
         <StatCard label="My pending" value={pending.length} icon={Clock} />

@@ -22,6 +22,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useRole } from './RoleContext';
+import { useCurrentUser } from './CurrentUserContext';
+import { getInitials } from '@/lib/sample-data';
 
 interface NavItem {
   label: string;
@@ -122,8 +124,13 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { role, toggleRole } = useRole();
+  const { currentUser, email } = useCurrentUser();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showChangePwd, setShowChangePwd] = useState(false);
+
+  const displayName = currentUser?.name ?? (email ? email.split('@')[0] : 'Loading…');
+  const displayDesignation = currentUser?.designation ?? (email ?? '');
+  const displayInitials = currentUser ? getInitials(currentUser.name) : (email ? email[0].toUpperCase() : '·');
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + '/');
@@ -192,7 +199,9 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 pb-4">
-        {navSections.map((section) => (
+        {navSections
+          .filter((section) => section.title !== 'Admin' || email === 'divya.krishnan@squareyards.com')
+          .map((section) => (
           <div key={section.title} className="mb-5">
             <h3 className="gb-nav-section-title">{section.title}</h3>
             <div className="space-y-0.5">
@@ -270,14 +279,14 @@ export default function Sidebar() {
               border: '1px solid var(--border)',
             }}
           >
-            DK
+            {displayInitials}
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[13px] font-medium truncate" style={{ color: 'var(--text-primary)' }}>
-              Divya Krishnan
+              {displayName}
             </div>
             <div className="text-[11px] truncate" style={{ color: 'var(--text-faint)' }}>
-              Head of Design
+              {displayDesignation}
             </div>
           </div>
           <button className="gb-icon-btn" title="Settings" style={{ width: 26, height: 26 }}>
